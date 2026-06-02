@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+/* Custom map popup styles */
+.vicem-popup .leaflet-popup-content-wrapper {
+  padding: 0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.vicem-popup .leaflet-popup-content {
+  margin: 0;
+  padding: 0.75rem;
+}
