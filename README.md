@@ -1,7 +1,8 @@
-[🇻🇳 Tiếng Việt](#-hệ-thống-bản-đồ-quản-lý-phân-phối-vicem-map) | [🇬🇧 English](#-distribution-management-map-system-vicem-map)
+[🇻🇳 Tiếng Việt](#tieng-viet) | [🇬🇧 English](#english)
 
 ---
 
+<a name="tieng-viet"></a>
 # 🗺️ Hệ thống Bản đồ Quản lý Phân phối (Vicem Map)
 
 Ứng dụng bản đồ tương tác nền tảng Web được thiết kế để quản lý, trực quan hóa và tìm kiếm mạng lưới nhà phân phối/đại lý trên hệ thống thông tin địa lý (GIS). 
@@ -79,6 +80,7 @@ npx firebase-tools deploy
 <br>
 <br>
 
+<a name="english"></a>
 # 🗺️ Distribution Management Map System (Vicem Map)
 
 An interactive web-based map application designed to manage, visualize, and search a network of distributors/dealers on a Geographic Information System (GIS).
