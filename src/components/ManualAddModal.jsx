@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { addDealerToDB, updateDealerInDB } from '../services/firebase';
 import danangAdmin from '../assets/danang_admin.json';
 import { geocodeAddress } from '../utils/geocoding';
@@ -17,6 +17,89 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData 
 
   const [formData, setFormData] = useState(defaultState);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Autocomplete states
+  const [addressSuggestions, setAddressSuggestions] = useState([]);
+  const [showAddressDropdown, setShowAddressDropdown] = useState(false);
+  const [isSearchingAddress, setIsSearchingAddress] = useState(false);
+  const timeoutRef = useRef(null);
+
+  useEffect(() => {
+    // Only search if typing manually (not just selected) and length > 3
+    if (!formData.address || formData.resolvedLat || formData.address.length < 3) {
+      setAddressSuggestions([]);
+      return;
+    }
+
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+    timeoutRef.current = setTimeout(async () => {
+      setIsSearchingAddress(true);
+      try {
+        const searchQuery = formData.address.toLowerCase().includes('đà nẵng') ? formData.address : formData.address + ' Đà Nẵng';
+        const res = await fetch(`https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?f=json&singleLine=${encodeURIComponent(searchQuery)}&outFields=Match_addr&maxLocations=5`);
+        const apiData = await res.json();
+        
+        const uniqueMatches = [];
+        const seen = new Set();
+        if (apiData.candidates) {
+          apiData.candidates.forEach(item => {
+            const addressStr = item.address;
+            if (!seen.has(addressStr) && addressStr.toLowerCase().includes('đà nẵng')) {
+              seen.add(addressStr);
+              uniqueMatches.push({
+                name: addressStr.split(',')[0], // Extract just the street part
+                address: addressStr,
+                lat: item.location.y,
+                lng: item.location.x
+              });
+            }
+          });
+        }
+        setAddressSuggestions(uniqueMatches);
+      } catch (err) {
+        console.error("ArcGIS Search Error", err);
+        setAddressSuggestions([]);
+      }
+      setIsSearchingAddress(false);
+    }, 500);
+
+    return () => clearTimeout(timeoutRef.current);
+  }, [formData.address, formData.resolvedLat]);
+
+  const handleSelectSuggestion = (suggestion) => {
+    let newDistrict = formData.district;
+    let newWard = formData.ward;
+    
+    // Attempt to parse District
+    districtsList.forEach(dist => {
+      if (suggestion.address.toLowerCase().includes(dist.toLowerCase())) {
+        newDistrict = dist;
+      }
+    });
+
+    // Attempt to parse Ward
+    if (danangAdmin[newDistrict]) {
+      let foundWard = false;
+      danangAdmin[newDistrict].forEach(w => {
+         if (suggestion.address.toLowerCase().includes(w.toLowerCase())) {
+           newWard = w;
+           foundWard = true;
+         }
+      });
+      if (!foundWard) newWard = danangAdmin[newDistrict][0];
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      address: suggestion.name,
+      district: newDistrict,
+      ward: newWard,
+      resolvedLat: suggestion.lat,
+      resolvedLng: suggestion.lng
+    }));
+    setShowAddressDropdown(false);
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -40,6 +123,8 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData 
         district: value, 
         ward: danangAdmin[value][0] // Reset ward when district changes
       }));
+    } else if (name === 'address') {
+      setFormData(prev => ({ ...prev, address: value, resolvedLat: null, resolvedLng: null }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -49,13 +134,25 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData 
     e.preventDefault();
     setIsLoading(true);
     try {
-      // Tự động tìm tọa độ dựa trên địa chỉ
-      const coords = await geocodeAddress(formData.address, formData.ward, formData.district);
+      let lat = formData.resolvedLat;
+      let lng = formData.resolvedLng;
+
+      // Nếu không chọn từ gợi ý, mới phải gọi Geocoding Fallback
+      if (!lat || !lng) {
+        const coords = await geocodeAddress(formData.address, formData.ward, formData.district);
+        lat = coords.lat;
+        lng = coords.lng;
+      }
       
       const dealer = {
-        ...formData,
-        lat: coords.lat,
-        lng: coords.lng
+        name: formData.name,
+        address: formData.address,
+        district: formData.district,
+        ward: formData.ward,
+        phone: formData.phone,
+        status: formData.status,
+        lat,
+        lng
       };
 
       if (editData && editData.id) {
@@ -107,9 +204,36 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData 
               </select>
             </div>
 
-            <div className="col-span-2">
+            <div className="col-span-2 relative">
               <label className="block text-sm font-bold text-gray-700 mb-1">Địa chỉ chi tiết (số nhà, đường) *</label>
-              <input required type="text" name="address" value={formData.address} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="VD: 12 Nguyễn Văn Linh" />
+              <input 
+                required 
+                type="text" 
+                name="address" 
+                value={formData.address} 
+                onChange={handleChange} 
+                onFocus={() => setShowAddressDropdown(true)}
+                onBlur={() => setTimeout(() => setShowAddressDropdown(false), 200)}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
+                placeholder="VD: 12 Nguyễn Văn Linh" 
+                autoComplete="off"
+              />
+              
+              {showAddressDropdown && (isSearchingAddress || addressSuggestions.length > 0) && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-xl max-h-60 overflow-y-auto z-[2500]">
+                  {isSearchingAddress && <div className="p-3 text-sm text-gray-500 text-center">Đang tìm địa chỉ...</div>}
+                  {!isSearchingAddress && addressSuggestions.map((sug, i) => (
+                    <div 
+                      key={i} 
+                      onClick={() => handleSelectSuggestion(sug)}
+                      className="p-3 hover:bg-blue-50 cursor-pointer border-b last:border-b-0"
+                    >
+                      <div className="font-bold text-sm text-gray-800">{sug.name}</div>
+                      <div className="text-xs text-gray-500 truncate">{sug.address}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div>
