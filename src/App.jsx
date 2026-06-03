@@ -40,12 +40,8 @@ const App = () => {
       setDealers(data);
     } catch (error) {
       console.error("Lỗi tải Database Firebase:", error);
-      if (dealers.length === 0) {
-        setDealers([
-          { id: '1', name: 'Đại lý Cấp 1 Hùng Cường', address: '12 Nguyễn Văn Linh', district: 'Hải Châu', ward: 'Bình Hiên', status: 'Đã bán', lat: 16.061, lng: 108.214 },
-          { id: '2', name: 'VLXD Phương Trang', address: '45 Điện Biên Phủ', district: 'Thanh Khê', ward: 'Chính Gián', status: 'Chưa bán', lat: 16.068, lng: 108.192 },
-        ]);
-      }
+      alert("Không thể kết nối đến dữ liệu Firebase. Vui lòng kiểm tra kết nối mạng hoặc cấu hình máy chủ.");
+      setDealers([]);
     }
   };
 
