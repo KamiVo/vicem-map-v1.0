@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
+import { geocodeAddress } from './geocoding';
 
 export const exportToExcel = async (dealers, fileName = "Vicem_Dealers.xlsx") => {
   const workbook = new ExcelJS.Workbook();
@@ -34,7 +35,7 @@ export const exportToExcel = async (dealers, fileName = "Vicem_Dealers.xlsx") =>
   saveAs(blob, fileName);
 };
 
-export const importFromExcel = (file) => {
+export const importFromExcel = (file, onProgress) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -65,18 +66,37 @@ export const importFromExcel = (file) => {
           jsonData.push(rowData);
         });
         
-        const mappedDealers = jsonData.map(row => ({
-          name: row["Tên đại lý"] || row.name || "",
-          address: row["Địa chỉ"] || row.address || "",
-          ward: row["Phường/Xã"] || row.ward || "",
-          district: row["Quận/Huyện"] || row.district || "",
-          phone: row["Số điện thoại"] || row.phone || "",
-          status: row["Trạng thái"] || row.status || "Chưa bán",
-          lat: parseFloat(row["Vĩ độ (Lat)"] || row.lat),
-          lng: parseFloat(row["Kinh độ (Lng)"] || row.lng)
-        }));
+        const finalDealers = [];
+        for (let i = 0; i < jsonData.length; i++) {
+          const row = jsonData[i];
+          const address = row["Địa chỉ"] || row.address || "";
+          const ward = row["Phường/Xã"] || row.ward || "";
+          const district = row["Quận/Huyện"] || row.district || "Hải Châu";
+          
+          let lat = parseFloat(row["Vĩ độ (Lat)"] || row.lat);
+          let lng = parseFloat(row["Kinh độ (Lng)"] || row.lng);
+          
+          // Nếu không có tọa độ trong Excel, thực hiện Geocoding
+          if (isNaN(lat) || isNaN(lng)) {
+            if (onProgress) onProgress(`Đang dò tọa độ ${i+1}/${jsonData.length}...`);
+            const coords = await geocodeAddress(address, ward, district);
+            lat = coords.lat;
+            lng = coords.lng;
+          }
 
-        resolve(mappedDealers);
+          finalDealers.push({
+            name: row["Tên đại lý"] || row.name || "",
+            address,
+            ward,
+            district,
+            phone: row["Số điện thoại"] || row.phone || "",
+            status: row["Trạng thái"] || row.status || "Chưa bán",
+            lat,
+            lng
+          });
+        }
+
+        resolve(finalDealers);
       } catch (error) {
         reject(error);
       }

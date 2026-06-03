@@ -1,25 +1,36 @@
-import React, { useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { batchAddDealersToDB } from '../services/firebase';
-import { FaFileExcel, FaFileImport, FaMapMarkedAlt, FaArrowLeft, FaStore, FaMapMarkerAlt, FaPhoneAlt, FaMap, FaTimes } from 'react-icons/fa';
+import { importFromExcel, exportToExcel } from '../utils/excelHandler';
+import danangAdmin from '../assets/danang_admin.json';
+import { FaFileExcel, FaFileImport, FaMapMarkedAlt, FaArrowLeft, FaStore, FaMapMarkerAlt, FaPhoneAlt, FaMap, FaTimes, FaSpinner } from 'react-icons/fa';
 import SearchBar from './SearchBar';
+
+const districtsList = Object.keys(danangAdmin);
 
 const Sidebar = ({ filters, setFilters, showGeoJSON, setShowGeoJSON, dealers, onDataImported, onOpenAddModal, selectedLocation, onSelectLocation, onClearSelection, onEditDealer, onDeleteDealer, isMobileSidebarOpen, setIsMobileSidebarOpen }) => {
   const fileInputRef = useRef(null);
+  const [importProgress, setImportProgress] = useState(null);
 
   const handleImportExcel = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
+    setImportProgress("Đang khởi tạo nhập liệu...");
     try {
-      const data = await importFromExcel(file);
+      const data = await importFromExcel(file, (msg) => {
+         setImportProgress(msg);
+      });
+      setImportProgress("Đang đẩy dữ liệu lên hệ thống...");
       await batchAddDealersToDB(data);
       alert("Nhập dữ liệu Excel lên hệ thống thành công!");
       onDataImported();
     } catch (error) {
       console.error("Lỗi nhập Excel:", error);
       alert("Có lỗi xảy ra khi nhập file Excel.");
+    } finally {
+      setImportProgress(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
-    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
 
@@ -162,27 +173,23 @@ const Sidebar = ({ filters, setFilters, showGeoJSON, setShowGeoJSON, dealers, on
                 <select
                   className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-medium text-gray-800"
                   value={filters.district}
-                  onChange={(e) => setFilters({ ...filters, district: e.target.value })}
+                  onChange={(e) => setFilters({ ...filters, district: e.target.value, ward: '' })}
                 >
-                  <option value="">Tất cả</option>
-                  <option value="Hải Châu">Hải Châu</option>
-                  <option value="Thanh Khê">Thanh Khê</option>
-                  <option value="Sơn Trà">Sơn Trà</option>
-                  <option value="Ngũ Hành Sơn">Ngũ Hành Sơn</option>
-                  <option value="Liên Chiểu">Liên Chiểu</option>
-                  <option value="Cẩm Lệ">Cẩm Lệ</option>
-                  <option value="Hòa Vang">Hòa Vang</option>
+                  <option value="">Tất cả Quận/Huyện</option>
+                  {districtsList.map(dist => <option key={dist} value={dist}>{dist}</option>)}
                 </select>
               </div>
               <div className="flex-1">
                 <label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Phường/Xã</label>
-                <input
-                  type="text"
-                  placeholder="Lọc phường..."
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-medium text-gray-800"
+                <select
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-medium text-gray-800 disabled:opacity-50"
                   value={filters.ward}
                   onChange={(e) => setFilters({ ...filters, ward: e.target.value })}
-                />
+                  disabled={!filters.district}
+                >
+                  <option value="">Tất cả Phường/Xã</option>
+                  {filters.district && danangAdmin[filters.district]?.map(w => <option key={w} value={w}>{w}</option>)}
+                </select>
               </div>
             </div>
 
@@ -223,6 +230,11 @@ const Sidebar = ({ filters, setFilters, showGeoJSON, setShowGeoJSON, dealers, on
 
           {/* Cụm Nút Excel & Thêm thủ công */}
           <div className="mt-auto space-y-2 pt-4 border-t border-gray-200">
+            {importProgress && (
+              <div className="bg-blue-50 text-blue-700 p-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 animate-pulse border border-blue-200">
+                <FaSpinner className="animate-spin" /> {importProgress}
+              </div>
+            )}
             <input
               type="file"
               accept=".xlsx, .xls"

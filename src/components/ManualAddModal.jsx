@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { addDealerToDB, updateDealerInDB } from '../services/firebase';
+import danangAdmin from '../assets/danang_admin.json';
+import { geocodeAddress } from '../utils/geocoding';
+
+const districtsList = Object.keys(danangAdmin);
 
 const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData }) => {
   const defaultState = {
     name: '',
     address: '',
-    ward: '',
     district: 'Hải Châu',
+    ward: danangAdmin['Hải Châu'][0],
     phone: '',
-    status: 'Đã bán',
-    lat: '',
-    lng: ''
+    status: 'Đã bán'
   };
 
   const [formData, setFormData] = useState(defaultState);
@@ -32,24 +34,29 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData 
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'district') {
+      setFormData(prev => ({ 
+        ...prev, 
+        district: value, 
+        ward: danangAdmin[value][0] // Reset ward when district changes
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     try {
+      // Tự động tìm tọa độ dựa trên địa chỉ
+      const coords = await geocodeAddress(formData.address, formData.ward, formData.district);
+      
       const dealer = {
         ...formData,
-        lat: parseFloat(formData.lat),
-        lng: parseFloat(formData.lng)
+        lat: coords.lat,
+        lng: coords.lng
       };
-      
-      if (isNaN(dealer.lat) || isNaN(dealer.lng)) {
-        alert("Tọa độ Lat/Lng phải là dạng số!");
-        setIsLoading(false);
-        return;
-      }
 
       if (editData && editData.id) {
         // Mode: Edit
@@ -108,28 +115,19 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData 
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">Quận/Huyện *</label>
               <select name="district" value={formData.district} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                <option value="Hải Châu">Hải Châu</option>
-                <option value="Thanh Khê">Thanh Khê</option>
-                <option value="Sơn Trà">Sơn Trà</option>
-                <option value="Ngũ Hành Sơn">Ngũ Hành Sơn</option>
-                <option value="Liên Chiểu">Liên Chiểu</option>
-                <option value="Cẩm Lệ">Cẩm Lệ</option>
-                <option value="Hòa Vang">Hòa Vang</option>
+                {districtsList.map(dist => (
+                  <option key={dist} value={dist}>{dist}</option>
+                ))}
               </select>
             </div>
             
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">Phường/Xã</label>
-              <input type="text" name="ward" value={formData.ward} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="VD: Phường Thạch Thang" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">Vĩ độ (Lat) *</label>
-              <input required type="number" step="any" name="lat" value={formData.lat} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="16.0544" />
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">Kinh độ (Lng) *</label>
-              <input required type="number" step="any" name="lng" value={formData.lng} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="108.2022" />
+              <label className="block text-sm font-bold text-gray-700 mb-1">Phường/Xã *</label>
+              <select name="ward" value={formData.ward} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                {danangAdmin[formData.district]?.map(w => (
+                  <option key={w} value={w}>{w}</option>
+                ))}
+              </select>
             </div>
           </div>
 

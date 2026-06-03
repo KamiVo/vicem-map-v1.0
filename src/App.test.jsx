@@ -50,7 +50,7 @@ describe('App Component', () => {
     render(<App />);
     await screen.findByText(/Dealers count: 2/i);
 
-    const selectDistrict = screen.getByRole('combobox'); // dropdown district
+    const selectDistrict = screen.getAllByRole('combobox')[0]; // dropdown district is first
     fireEvent.change(selectDistrict, { target: { value: 'Sơn Trà' } });
 
     // Chỉ có 1 đại lý ở Sơn Trà
@@ -61,8 +61,13 @@ describe('App Component', () => {
     render(<App />);
     await screen.findByText(/Dealers count: 2/i);
 
-    const wardInput = screen.getByPlaceholderText('Lọc phường...');
-    fireEvent.change(wardInput, { target: { value: 'Bình Hiên' } });
+    // First select district to enable ward dropdown
+    const selectDistrict = screen.getAllByRole('combobox')[0];
+    fireEvent.change(selectDistrict, { target: { value: 'Hải Châu' } });
+
+    // Then select ward
+    const wardSelect = screen.getAllByRole('combobox')[1];
+    fireEvent.change(wardSelect, { target: { value: 'Bình Hiên' } });
 
     // Cần 1 đại lý khớp (Đại lý Test 1 mocked with ward = 'Bình Hiên')
     expect(screen.getByTestId('map-viewer')).toHaveTextContent('Dealers count: 1');
