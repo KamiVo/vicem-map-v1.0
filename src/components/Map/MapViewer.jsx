@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, GeoJSON, LayersControl, ZoomControl, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, GeoJSON, LayersControl, ZoomControl, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -87,7 +87,7 @@ const getLocationIcon = () => {
   });
 };
 
-const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, selectedLocation, onSelectLocation }) => {
+const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, selectedLocation, onSelectLocation, onOpenDashboard }) => {
   const [geoData, setGeoData] = useState(null);
   
   // Tọa độ trung tâm mặc định Đà Nẵng
@@ -236,7 +236,23 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, selected
               eventHandlers={{ 
                 click: () => onSelectLocation({ ...dealer, type: 'dealer' }) 
               }}
-            />
+            >
+              <Popup offset={[0, -20]} className="custom-popup">
+                <div className="p-1 min-w-[200px]">
+                  <h3 className="font-bold text-gray-900 text-sm mb-1 leading-tight">{dealer.name}</h3>
+                  <p className="text-[11px] text-gray-500 mb-3 line-clamp-2">{dealer.address}</p>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onOpenDashboard) onOpenDashboard(dealer);
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-xs font-bold transition-colors shadow-sm"
+                  >
+                    Xem chi tiết
+                  </button>
+                </div>
+              </Popup>
+            </Marker>
           );
         })}
 

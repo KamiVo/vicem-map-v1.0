@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { addDealerToDB, updateDealerInDB } from '../services/firebase';
+import { addDealerToDB, updateDealerInDB, deleteField } from '../services/firebase';
 import danangAdmin from '../assets/danang_admin.json';
 import { geocodeAddress } from '../utils/geocoding';
 
@@ -12,7 +12,11 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData 
     district: 'Hải Châu',
     ward: danangAdmin['Hải Châu'][0],
     phone: '',
-    status: 'Đã bán'
+    status: 'Đã bán',
+    owner: '',
+    founder: '',
+    establishedYear: '',
+    landStatus: 'Đang thuê'
   };
 
   const [formData, setFormData] = useState(defaultState);
@@ -144,7 +148,19 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData 
         lng = coords.lng;
       }
       
-      const dealer = {
+      let ownerHistory = editData?.ownerHistory || [];
+      // Hỗ trợ tương thích ngược với dữ liệu cũ (khi oldOwner là chuỗi)
+      if (editData?.oldOwner && typeof editData.oldOwner === 'string' && ownerHistory.length === 0) {
+        ownerHistory = [editData.oldOwner];
+      }
+      
+      if (editData?.owner && editData.owner !== formData.owner) {
+        // Có thể thêm timestamp sau này nếu cần: `${editData.owner} (Đến ${new Date().toLocaleDateString()})`
+        const dateStr = new Date().toLocaleDateString('vi-VN');
+        ownerHistory = [...ownerHistory, `${editData.owner} (Cập nhật ngày ${dateStr})`];
+      }
+
+      const dealerBase = {
         name: formData.name,
         address: formData.address,
         district: formData.district,
@@ -152,17 +168,22 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData 
         phone: formData.phone,
         status: formData.status,
         lat,
-        lng
+        lng,
+        owner: formData.owner || '',
+        founder: formData.founder || '',
+        establishedYear: formData.establishedYear || '',
+        landStatus: formData.landStatus || 'Đang thuê',
+        ownerHistory: ownerHistory,
       };
 
       if (editData && editData.id) {
-        // Mode: Edit
-        await updateDealerInDB(editData.id, dealer);
+        // Mode: Edit - gửi thêm deleteField để xóa trường oldOwner cũ khỏi Firebase
+        await updateDealerInDB(editData.id, { ...dealerBase, oldOwner: deleteField() });
         alert("Cập nhật đại lý thành công!");
       } else {
-        // Mode: Add
-        await addDealerToDB(dealer);
-        alert("Thêm đại lý thành công!");
+        // Mode: Add - không có trường rác nào cả
+        await addDealerToDB(dealerBase);
+        alert("Đã thêm đại lý thành công!");
       }
       
       onDataAdded(); // Yêu cầu map tải lại
@@ -204,6 +225,31 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData 
               </select>
             </div>
 
+            {/* CHỨC NĂNG THÊM VÀ HIỂN THỊ LỊCH SỬ CÁC CHỦ SỞ HỮU Thắng */}
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-sm font-bold text-gray-700 mb-1">Chủ hiện tại</label>
+              <input type="text" name="owner" value={formData.owner || ''} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="VD: Trần Thị B" />
+            </div>
+
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-sm font-bold text-gray-700 mb-1">Người sáng lập</label>
+              <input type="text" name="founder" value={formData.founder || ''} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="VD: Nguyễn Văn A" />
+            </div>
+
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-sm font-bold text-gray-700 mb-1">Năm thành lập</label>
+              <input type="number" name="establishedYear" value={formData.establishedYear || ''} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="VD: 2016" />
+            </div>
+
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-sm font-bold text-gray-700 mb-1">Tình trạng đất</label>
+              <select name="landStatus" value={formData.landStatus || 'Đang thuê'} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                <option value="Đang thuê">Đang thuê</option>
+                <option value="Mua trực tiếp">Mua trực tiếp</option>
+              </select>
+            </div>
+
+            {/* //////////////////////////////////////////////////////////////////////////////// */}
             <div className="col-span-2 relative">
               <label className="block text-sm font-bold text-gray-700 mb-1">Địa chỉ chi tiết (số nhà, đường) *</label>
               <input 

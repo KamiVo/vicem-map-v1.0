@@ -4,6 +4,8 @@ import Sidebar from './components/Sidebar';
 import MapViewer from './components/Map/MapViewer';
 import ManualAddModal from './components/ManualAddModal';
 import { fetchDealersFromDB, deleteDealerFromDB } from './services/firebase';
+import DashboardModal from './components/DashboardModal';
+import DataManagementModal from './components/DataManagementModal';
 
 const App = () => {
   // Master state
@@ -22,6 +24,8 @@ const App = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalCoords, setModalCoords] = useState(null);
   const [modalEditData, setModalEditData] = useState(null);
+  const [dashboardDealer, setDashboardDealer] = useState(null);
+  const [dataManagerDealer, setDataManagerDealer] = useState(null);
 
   // Selected Location State (Dealer or Nominatim Place)
   const [selectedLocation, setSelectedLocation] = useState(null);
@@ -136,6 +140,7 @@ const App = () => {
           onDeleteDealer={handleDeleteDealer}
           selectedLocation={selectedLocation}
           onSelectLocation={handleSelectLocation}
+          onOpenDashboard={(dealer) => setDashboardDealer(dealer)}
         />
       </div>
 
@@ -149,6 +154,24 @@ const App = () => {
         initialCoords={modalCoords}
         editData={modalEditData}
       />
+      {/* SỬA PHẦN NÀY */}
+      {dashboardDealer && (
+        <DashboardModal 
+          dealer={dashboardDealer}
+          onClose={() => setDashboardDealer(null)}
+          onOpenDataManager={() => {
+            setDataManagerDealer(dashboardDealer);
+            setDashboardDealer(null);
+          }}
+        />
+      )}
+
+      {dataManagerDealer && (
+        <DataManagementModal
+          dealer={dataManagerDealer}
+          onClose={() => setDataManagerDealer(null)}
+        />
+      )}
     </div>
   );
 };
