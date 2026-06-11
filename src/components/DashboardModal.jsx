@@ -1,18 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { FaTimes, FaSync, FaMapMarkerAlt, FaPhoneAlt, FaBoxOpen, FaSpinner, FaCog } from 'react-icons/fa';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { fetchSalesData, fetchProducts } from '../services/firebase';
+import { fetchSalesData, fetchProducts, fetchAllSalesYears } from '../services/firebase';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
 const DashboardModal = ({ dealer, onClose, onOpenDataManager }) => {
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
+  const [availableYears, setAvailableYears] = useState([CURRENT_YEAR]);
 
   const [salesData, setSalesData] = useState(null);
   const [salesLoading, setSalesLoading] = useState(false);
 
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
+
+  // Load available years
+  useEffect(() => {
+    if (!dealer?.id) return;
+    fetchAllSalesYears(dealer.id)
+      .then(yearsData => {
+        const years = yearsData.map(y => Number(y.year));
+        if (!years.includes(CURRENT_YEAR)) years.push(CURRENT_YEAR);
+        setAvailableYears(Array.from(new Set(years)).sort((a, b) => b - a));
+      })
+      .catch(console.error);
+  }, [dealer?.id]);
+
+  useEffect(() => {
+    if (!availableYears.includes(selectedYear)) {
+      setAvailableYears(prev => Array.from(new Set([...prev, selectedYear])).sort((a, b) => b - a));
+    }
+  }, [selectedYear, availableYears]);
 
   // Load sales on year switch
   useEffect(() => {
@@ -154,16 +173,16 @@ const DashboardModal = ({ dealer, onClose, onOpenDataManager }) => {
                   </h3>
                   <p className="text-xs text-gray-500 mt-1">Ghi nhận tổng từng tháng và cộng lũy kế năm</p>
                 </div>
-                <div className="flex gap-2">
-                  {[CURRENT_YEAR - 1, CURRENT_YEAR].map(y => (
-                    <button
-                      key={y}
-                      onClick={() => setSelectedYear(y)}
-                      className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${selectedYear === y ? 'bg-orange-500 text-white shadow-md shadow-orange-500/30' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                    >
-                      {y}
-                    </button>
-                  ))}
+                <div className="flex items-center gap-2">
+                  <select
+                    value={selectedYear}
+                    onChange={e => setSelectedYear(Number(e.target.value))}
+                    className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-bold text-gray-800 outline-none focus:ring-2 focus:ring-orange-400"
+                  >
+                    {availableYears.map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

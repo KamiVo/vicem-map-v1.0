@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaTimes, FaSpinner, FaSave, FaTrash, FaPlus, FaChartBar, FaBoxOpen } from 'react-icons/fa';
-import { fetchSalesData, saveSalesData, fetchProducts, saveProduct, deleteProduct } from '../services/firebase';
+import { fetchSalesData, saveSalesData, fetchProducts, saveProduct, deleteProduct, fetchAllSalesYears } from '../services/firebase';
 
 const MONTHS = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
 const CURRENT_YEAR = new Date().getFullYear();
@@ -10,6 +10,7 @@ const emptyProduct = { name: '', stock: '', stockUnit: 'Bao', price: '', priceUn
 const DataManagementModal = ({ dealer, onClose }) => {
   const [activeTab, setActiveTab] = useState('sales');
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
+  const [availableYears, setAvailableYears] = useState([CURRENT_YEAR]);
   
   // Sales state
   const [months, setMonths] = useState(Array(12).fill(0));
@@ -20,6 +21,24 @@ const DataManagementModal = ({ dealer, onClose }) => {
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null); // null | 'new' | {id, ...}
+
+  // Load available years
+  useEffect(() => {
+    if (!dealer?.id) return;
+    fetchAllSalesYears(dealer.id)
+      .then(yearsData => {
+        const years = yearsData.map(y => Number(y.year));
+        if (!years.includes(CURRENT_YEAR)) years.push(CURRENT_YEAR);
+        setAvailableYears(Array.from(new Set(years)).sort((a, b) => b - a));
+      })
+      .catch(console.error);
+  }, [dealer?.id]);
+
+  useEffect(() => {
+    if (!availableYears.includes(selectedYear)) {
+      setAvailableYears(prev => Array.from(new Set([...prev, selectedYear])).sort((a, b) => b - a));
+    }
+  }, [selectedYear, availableYears]);
 
   // Load sales data on year change
   useEffect(() => {
@@ -132,19 +151,14 @@ const DataManagementModal = ({ dealer, onClose }) => {
                     onChange={e => setSelectedYear(Number(e.target.value))}
                     className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-bold text-gray-800 outline-none focus:ring-2 focus:ring-orange-400"
                   >
-                    {Array.from({ length: 10 }, (_, i) => CURRENT_YEAR - i).map(y => (
-                      <option key={y} value={y}>{y}</option>
+                    {Array.from({ length: CURRENT_YEAR - 1900 + 1 }, (_, i) => CURRENT_YEAR - i)
+                      .concat(availableYears) // Lấy theo năm hiện tại và các năm đã có dữ liệu
+                      .filter((v, i, self) => self.indexOf(v) === i) // Ensure unique
+                      .sort((a, b) => b - a)
+                      .map(y => (
+                        <option key={y} value={y}>{y}</option>
                     ))}
                   </select>
-                  <input
-                    type="number"
-                    min="2000"
-                    max={CURRENT_YEAR + 5}
-                    value={selectedYear}
-                    onChange={e => e.target.value && setSelectedYear(Number(e.target.value))}
-                    className="w-24 border border-gray-200 rounded-lg px-2 py-1.5 text-sm font-bold text-gray-800 outline-none focus:ring-2 focus:ring-orange-400 text-center"
-                    placeholder="Năm..."
-                  />
                 </div>
               </div>
 
