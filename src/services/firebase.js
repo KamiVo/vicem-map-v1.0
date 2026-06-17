@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, collection, getDocs, writeBatch, doc } from "firebase/firestore";
+import { getFirestore, collection, getDocs, writeBatch, doc, getDoc, setDoc, updateDoc, deleteField } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
 
 // Để trống các config theo yêu cầu
@@ -13,14 +13,38 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// Khởi tạo Firebase an toàn cho Vite HMR (tránh lỗi duplicate-app khi lưu file)
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const analytics = typeof window !== "undefined" ? getAnalytics(app) : null;
+// Kiểm tra xem cấu hình Firebase có đầy đủ không (hoặc đang chạy trong môi trường test)
+const isConfigValid = !!(firebaseConfig.apiKey && firebaseConfig.projectId) || import.meta.env.MODE === 'test';
 
-export const db = getFirestore(app);
+let app = null;
+let db = null;
+let analytics = null;
+
+if (isConfigValid) {
+  try {
+    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    db = getFirestore(app);
+    // Chỉ khởi tạo Analytics khi có measurementId và chạy trên client
+    if (typeof window !== "undefined" && firebaseConfig.measurementId) {
+      analytics = getAnalytics(app);
+    }
+  } catch (error) {
+    console.error("Lỗi khi khởi tạo Firebase:", error);
+  }
+} else {
+  console.warn(
+    "⚠️ Firebase Config chưa được cấu hình. " +
+    "Vui lòng tạo file .env từ .env.example và điền đầy đủ các thông tin cấu hình Firebase."
+  );
+}
+
+export { db, deleteField };
 
 // Hàm tải danh sách đại lý từ Firestore
 export const fetchDealersFromDB = async () => {
+  if (!db) {
+    throw new Error("Firebase chưa được cấu hình. Vui lòng kiểm tra file .env.");
+  }
   const dealersCol = collection(db, "dealers");
   const dealerSnapshot = await getDocs(dealersCol);
   return dealerSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -28,6 +52,9 @@ export const fetchDealersFromDB = async () => {
 
 // Hàm nhập lô (batch insert) danh sách đại lý vào Firestore (Hỗ trợ > 500 bản ghi)
 export const batchAddDealersToDB = async (dealers) => {
+  if (!db) {
+    throw new Error("Firebase chưa được cấu hình. Vui lòng kiểm tra file .env.");
+  }
   const CHUNK_SIZE = 500;
   for (let i = 0; i < dealers.length; i += CHUNK_SIZE) {
     const chunk = dealers.slice(i, i + CHUNK_SIZE);
@@ -42,24 +69,36 @@ export const batchAddDealersToDB = async (dealers) => {
 
 // Hàm thêm 1 đại lý thủ công
 export const addDealerToDB = async (dealer) => {
+  if (!db) {
+    throw new Error("Firebase chưa được cấu hình. Vui lòng kiểm tra file .env.");
+  }
   const dealerRef = doc(collection(db, "dealers"));
   await writeBatch(db).set(dealerRef, dealer).commit();
 };
 
 // Hàm cập nhật 1 đại lý
 export const updateDealerInDB = async (id, data) => {
+  if (!db) {
+    throw new Error("Firebase chưa được cấu hình. Vui lòng kiểm tra file .env.");
+  }
   const dealerRef = doc(db, "dealers", id);
   await writeBatch(db).update(dealerRef, data).commit();
 };
 
 // Hàm xóa 1 đại lý
 export const deleteDealerFromDB = async (id) => {
+  if (!db) {
+    throw new Error("Firebase chưa được cấu hình. Vui lòng kiểm tra file .env.");
+  }
   const dealerRef = doc(db, "dealers", id);
   await writeBatch(db).delete(dealerRef).commit();
 };
 
 // Hàm xóa toàn bộ đại lý (Dùng cho Load Test)
 export const deleteAllDealersFromDB = async () => {
+  if (!db) {
+    throw new Error("Firebase chưa được cấu hình. Vui lòng kiểm tra file .env.");
+  }
   const dealersCol = collection(db, "dealers");
   const snapshot = await getDocs(dealersCol);
   
@@ -72,4 +111,74 @@ export const deleteAllDealersFromDB = async () => {
     });
     await batch.commit();
   }
+};
+
+// ============================================================
+// SUB-COLLECTION: SALES DATA (Sản lượng)
+// Cấu trúc: dealers/{dealerId}/sales/{year}
+// Document: { year, months: [t1,t2,...t12], total, unit, updatedAt }
+// ============================================================
+
+export const fetchSalesData = async (dealerId, year) => {
+  if (!db) throw new Error("Firebase chưa được cấu hình.");
+  const salesRef = doc(db, "dealers", dealerId, "sales", String(year));
+  const snapshot = await getDoc(salesRef);
+  if (snapshot.exists()) return snapshot.data();
+  // Trả về cấu trúc rỗng nếu chưa có dữ liệu cho năm này
+  return { year: Number(year), months: Array(12).fill(0), total: 0, unit: 'Tấn' };
+};
+
+export const saveSalesData = async (dealerId, year, monthlyData) => {
+  if (!db) throw new Error("Firebase chưa được cấu hình.");
+  const months = monthlyData.map(v => Number(v) || 0);
+  const total = months.reduce((sum, v) => sum + v, 0);
+  const salesRef = doc(db, "dealers", dealerId, "sales", String(year));
+  await setDoc(salesRef, {
+    year: Number(year),
+    months,
+    total,
+    unit: 'Tấn',
+    updatedAt: new Date().toISOString()
+  });
+  return total;
+};
+// Thắng sửa
+export const fetchAllSalesYears = async (dealerId) => {
+  if (!db) throw new Error("Firebase chưa được cấu hình.");
+  const salesCol = collection(db, "dealers", dealerId, "sales");
+  const snapshot = await getDocs(salesCol);
+  return snapshot.docs
+    .map(d => ({ year: d.id, ...d.data() }))
+    .sort((a, b) => Number(b.year) - Number(a.year));
+};
+
+// ============================================================
+// SUB-COLLECTION: PRODUCTS (Hàng hóa)
+// Cấu trúc: dealers/{dealerId}/products/{productId}
+// Document: { name, stock, stockUnit, price, priceUnit }
+// ============================================================
+
+export const fetchProducts = async (dealerId) => {
+  if (!db) throw new Error("Firebase chưa được cấu hình.");
+  const productsCol = collection(db, "dealers", dealerId, "products");
+  const snapshot = await getDocs(productsCol);
+  return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+
+export const saveProduct = async (dealerId, product) => {
+  if (!db) throw new Error("Firebase chưa được cấu hình.");
+  const { id, ...data } = product;
+  if (id) {
+    // Cập nhật sản phẩm đã có
+    await setDoc(doc(db, "dealers", dealerId, "products", id), data);
+  } else {
+    // Thêm mới, Firestore tự tạo ID
+    await setDoc(doc(collection(db, "dealers", dealerId, "products")), data);
+  }
+};
+
+export const deleteProduct = async (dealerId, productId) => {
+  if (!db) throw new Error("Firebase chưa được cấu hình.");
+  const ref = doc(db, "dealers", dealerId, "products", productId);
+  await writeBatch(db).delete(ref).commit();
 };
