@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { addDealerToDB, updateDealerInDB, deleteField } from '../../services/firebase';
 import danangAdmin from '../../assets/danang_admin.json';
 import { geocodeAddress } from '../../utils/geocoding';
+import CustomSelect from '../UI/CustomSelect';
 
 const districtsList = Object.keys(danangAdmin);
 
@@ -144,17 +145,22 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData,
 
             <div className="col-span-2 sm:col-span-1">
               <label className="block text-xs md:text-sm font-black text-blue-900/60 mb-1.5 uppercase tracking-wide">Số điện thoại (tùy chọn)</label>
-              <input type="text" name="Phone" value={formData.phone} onChange={handleChange} className="w-full px-4 py-3 bg-white/50 border border-white/60 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-inner transition-all font-semibold text-gray-800" placeholder="VD: 0901234567" />
+              <input type="text" name="phone" value={formData.phone} onChange={handleChange} className="w-full px-4 py-3 bg-white/50 border border-white/60 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-inner transition-all font-semibold text-gray-800" placeholder="VD: 0901234567" />
             </div>
 
             <div className="col-span-2 sm:col-span-1">
               <label className="block text-xs md:text-sm font-black text-blue-900/60 mb-1.5 uppercase tracking-wide">Trạng thái *</label>
-              <select name="status" value={formData.status} onChange={handleChange} className="w-full px-4 py-3 bg-white/50 border border-white/60 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-inner transition-all font-semibold text-gray-800">
-                <option value="Đại lý tốt">Đại lý tốt</option>
-                <option value="Đại lý chưa bán">Đại lý chưa bán</option>
-                <option value="Đại lý rủi ro">Đại lý rủi ro</option>
-                <option value="Không chào bán">Không chào bán</option>
-              </select>
+              <CustomSelect 
+                name="status" 
+                value={formData.status} 
+                onChange={handleChange} 
+                options={[
+                  { label: 'Đại lý tốt', value: 'Đại lý tốt' },
+                  { label: 'Đại lý chưa bán', value: 'Đại lý chưa bán' },
+                  { label: 'Đại lý rủi ro', value: 'Đại lý rủi ro' },
+                  { label: 'Không chào bán', value: 'Không chào bán' },
+                ]}
+              />
             </div>
 
             <div className="col-span-2 sm:col-span-1">
@@ -174,10 +180,15 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData,
 
             <div className="col-span-2 sm:col-span-1">
               <label className="block text-xs md:text-sm font-black text-blue-900/60 mb-1.5 uppercase tracking-wide">Tình trạng đất</label>
-              <select name="landStatus" value={formData.landStatus || 'Đang thuê'} onChange={handleChange} className="w-full px-4 py-3 bg-white/50 border border-white/60 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-inner transition-all font-semibold text-gray-800">
-                <option value="Đang thuê">Đang thuê</option>
-                <option value="Mua trực tiếp">Mua trực tiếp</option>
-              </select>
+              <CustomSelect 
+                name="landStatus" 
+                value={formData.landStatus} 
+                onChange={handleChange} 
+                options={[
+                  { label: 'Đang thuê', value: 'Đang thuê' },
+                  { label: 'Mua trực tiếp', value: 'Mua trực tiếp' },
+                ]}
+              />
             </div>
 
             <div className="col-span-2">
@@ -195,20 +206,25 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData,
 
             <div>
               <label className="block text-xs md:text-sm font-black text-blue-900/60 mb-1.5 uppercase tracking-wide">Quận/Huyện *</label>
-              <select name="district" value={formData.district} onChange={handleChange} className="w-full px-4 py-3 bg-white/50 border border-white/60 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-inner transition-all font-semibold text-gray-800">
-                {districtsList.map(dist => (
-                  <option key={dist} value={dist}>{dist}</option>
-                ))}
-              </select>
+              <CustomSelect 
+                name="district" 
+                value={formData.district} 
+                onChange={handleChange} 
+                placeholder="Chọn Quận/Huyện"
+                options={districtsList.map(dist => ({ label: dist, value: dist }))}
+              />
             </div>
 
             <div>
               <label className="block text-xs md:text-sm font-black text-blue-900/60 mb-1.5 uppercase tracking-wide">Phường/Xã *</label>
-              <select name="ward" value={formData.ward} onChange={handleChange} className="w-full px-4 py-3 bg-white/50 border border-white/60 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-inner transition-all font-semibold text-gray-800">
-                {danangAdmin[formData.district]?.map(w => (
-                  <option key={w} value={w}>{w}</option>
-                ))}
-              </select>
+              <CustomSelect 
+                name="ward" 
+                value={formData.ward} 
+                onChange={handleChange} 
+                placeholder="Chọn Phường/Xã"
+                disabled={!formData.district}
+                options={danangAdmin[formData.district] ? danangAdmin[formData.district].map(w => ({ label: w, value: w })) : []}
+              />
             </div>
           </div>
 
@@ -225,7 +241,7 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData,
             <button type="button" onClick={onClose} className="px-6 py-2.5 text-gray-500 font-bold bg-white/50 border border-white/60 hover:bg-white rounded-xl transition-all shadow-sm">
               Hủy
             </button>
-            <button type="submit" disabled={isLoading} className="px-8 py-2.5 text-white font-black uppercase tracking-wider bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 rounded-xl transition-all shadow-[0_4px_15px_rgba(59,130,246,0.3)] hover:shadow-[0_4px_20px_rgba(34,211,238,0.4)] hover:-translate-y-0.5 disabled:opacity-50">
+            <button type="submit" disabled={isLoading} className="px-8 py-2.5 text-white font-black uppercase tracking-wider bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 rounded-xl transition-all shadow-[0_4px_15px_rgba(234,88,12,0.3)] hover:shadow-[0_4px_20px_rgba(245,158,11,0.4)] hover:-translate-y-0.5 disabled:opacity-50">
               {isLoading ? 'Đang lưu...' : (editData ? 'Cập nhật' : 'Thêm mới')}
             </button>
           </div>

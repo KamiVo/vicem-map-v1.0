@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import danangAdmin from '../../assets/danang_admin.json';
 import { FaMapMarkedAlt, FaArrowLeft, FaStore, FaMapMarkerAlt, FaPhoneAlt, FaMap, FaTimes, FaLock, FaUnlock, FaExpand, FaCompress } from 'react-icons/fa';
 import SearchBar from './SearchBar';
+import CustomSelect from '../UI/CustomSelect';
 import { useAuth } from '../../context/AuthContext';
 
 const districtsList = Object.keys(danangAdmin);
@@ -76,21 +77,21 @@ const Sidebar = ({ filters, setFilters, showGeoJSON, setShowGeoJSON, dealers, on
   };
 
   return (
-    <div className={`pointer-events-auto fixed md:relative top-0 left-0 h-full md:h-[calc(100vh-2rem)] md:my-4 md:ml-4 w-[85%] sm:w-[350px] md:w-[400px] bg-white/85 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] border border-white/50 z-[2000] flex flex-col transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${isSidebarOpen ? 'translate-x-0 md:translate-x-0 md:ml-4' : '-translate-x-full md:-translate-x-full md:-ml-[420px]'} rounded-r-2xl md:rounded-3xl overflow-hidden shrink-0`}>
+    <div className={`pointer-events-auto fixed md:relative top-0 left-0 h-full md:h-[calc(100vh-2rem)] md:my-4 md:ml-4 w-[85%] sm:w-[350px] md:w-[400px] bg-white/85 dark:bg-slate-900/85 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/50 dark:border-slate-700/50 z-[2000] flex flex-col transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${isSidebarOpen ? 'translate-x-0 md:translate-x-0 md:ml-4' : '-translate-x-full md:-translate-x-full md:-ml-[420px]'} rounded-r-2xl md:rounded-3xl overflow-hidden shrink-0`}>
 
       {/* Top Search Area */}
-      <div className="p-5 bg-white/40 backdrop-blur-md border-b border-white/30 shrink-0 z-20 flex items-center gap-3">
+      <div className="p-5 bg-white/40 dark:bg-slate-800/40 backdrop-blur-md border-b border-white/30 dark:border-slate-700/50 shrink-0 z-20 flex items-center gap-3">
         {selectedLocation ? (
           <button
             onClick={onClearSelection}
-            className="p-2.5 bg-gray-50 hover:bg-gray-100 rounded-full text-gray-600 transition-colors shrink-0"
+            className="p-2.5 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full text-gray-600 dark:text-gray-300 transition-colors shrink-0"
           >
             <FaArrowLeft />
           </button>
         ) : (
           <button
             onClick={() => setIsSidebarOpen(false)}
-            className="p-2.5 bg-gray-50 hover:bg-gray-100 rounded-full text-gray-600 transition-colors shrink-0"
+            className="p-2.5 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full text-gray-600 dark:text-gray-300 transition-colors shrink-0"
           >
             <FaTimes />
           </button>
@@ -98,16 +99,17 @@ const Sidebar = ({ filters, setFilters, showGeoJSON, setShowGeoJSON, dealers, on
         <div className="flex-1">
           <SearchBar dealers={dealers} onSelectLocation={onSelectLocation} />
         </div>
+
         <button 
           onClick={toggleFullscreen}
-          className="p-2.5 bg-gray-50 hover:bg-gray-100 rounded-full text-gray-600 transition-colors shrink-0"
+          className="p-2.5 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full text-gray-600 dark:text-gray-300 transition-colors shrink-0"
           title={isFullscreen ? "Thu nhỏ" : "Toàn màn hình"}
         >
           {isFullscreen ? <FaCompress /> : <FaExpand />}
         </button>
         <button 
           onClick={isAdmin ? logout : onOpenLogin} 
-          className={`p-2.5 rounded-full transition-colors shrink-0 ${isAdmin ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-blue-500'}`} 
+          className={`p-2.5 rounded-full transition-colors shrink-0 ${isAdmin ? 'bg-red-50 text-red-500 hover:bg-red-100 dark:bg-red-900/30 dark:hover:bg-red-900/50' : 'bg-gray-50 dark:bg-slate-800 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-blue-500 dark:hover:text-cyan-400'}`} 
           title={isAdmin ? "Đăng xuất Quản trị" : "Đăng nhập Quản trị"}
         >
           {isAdmin ? <FaUnlock /> : <FaLock />}
@@ -130,26 +132,30 @@ const Sidebar = ({ filters, setFilters, showGeoJSON, setShowGeoJSON, dealers, on
             <div className="flex gap-2">
               <div className="flex-1">
                 <label className="block text-xs md:text-sm font-bold text-gray-500 mb-1 uppercase">Quận/Huyện</label>
-                <select
-                  className="w-full px-4 py-2.5 rounded-xl border border-white/60 bg-white/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm font-semibold text-gray-800 shadow-inner"
+                <CustomSelect
                   value={filters.district}
                   onChange={(e) => setFilters({ ...filters, district: e.target.value, ward: '' })}
-                >
-                  <option value="">Tất cả Quận/Huyện</option>
-                  {districtsList.map(dist => <option key={dist} value={dist}>{dist}</option>)}
-                </select>
+                  triggerClassName="px-4 py-2.5 text-sm"
+                  placeholder="Tất cả Quận/Huyện"
+                  options={[
+                    { label: 'Tất cả Quận/Huyện', value: '' },
+                    ...districtsList.map(dist => ({ label: dist, value: dist }))
+                  ]}
+                />
               </div>
               <div className="flex-1">
                 <label className="block text-xs md:text-sm font-bold text-blue-900/60 mb-1.5 uppercase tracking-wide">Phường/Xã</label>
-                <select
-                  className="w-full px-4 py-2.5 rounded-xl border border-white/60 bg-white/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm font-semibold text-gray-800 shadow-inner disabled:opacity-40"
+                <CustomSelect
                   value={filters.ward}
                   onChange={(e) => setFilters({ ...filters, ward: e.target.value })}
                   disabled={!filters.district}
-                >
-                  <option value="">Tất cả Phường/Xã</option>
-                  {filters.district && danangAdmin[filters.district]?.map(w => <option key={w} value={w}>{w}</option>)}
-                </select>
+                  triggerClassName="px-4 py-2.5 text-sm"
+                  placeholder="Tất cả Phường/Xã"
+                  options={[
+                    { label: 'Tất cả Phường/Xã', value: '' },
+                    ...(filters.district && danangAdmin[filters.district] ? danangAdmin[filters.district].map(w => ({ label: w, value: w })) : [])
+                  ]}
+                />
               </div>
             </div>
 

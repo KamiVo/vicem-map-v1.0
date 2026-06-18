@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaTimes, FaSpinner, FaSave, FaTrash, FaPlus, FaChartBar, FaBoxOpen } from 'react-icons/fa';
 import { fetchSalesData, saveSalesData, fetchProducts, saveProduct, deleteProduct, fetchAllSalesYears } from '../../services/firebase';
+import CustomSelect from '../UI/CustomSelect';
 
 const MONTHS = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
 const CURRENT_YEAR = new Date().getFullYear();
@@ -146,19 +147,18 @@ const DataManagementModal = ({ dealer, onClose }) => {
                 <h3 className="font-black text-gray-800 uppercase tracking-wide text-sm">Nhập sản lượng theo từng tháng</h3>
                 <div className="flex items-center gap-3">
                   <label className="text-xs text-blue-900/60 font-black uppercase tracking-widest">Năm:</label>
-                  <select
-                    value={selectedYear}
-                    onChange={e => setSelectedYear(Number(e.target.value))}
-                    className="bg-white/60 border border-white/60 rounded-xl px-4 py-2 text-sm font-bold text-gray-800 outline-none focus:ring-2 focus:ring-blue-500/50 shadow-inner"
-                  >
-                    {Array.from({ length: CURRENT_YEAR - 1900 + 1 }, (_, i) => CURRENT_YEAR - i)
-                      .concat(availableYears) // Lấy theo năm hiện tại và các năm đã có dữ liệu
-                      .filter((v, i, self) => self.indexOf(v) === i) // Ensure unique
-                      .sort((a, b) => b - a)
-                      .map(y => (
-                        <option key={y} value={y}>{y}</option>
-                    ))}
-                  </select>
+                  <div className="w-32">
+                    <CustomSelect
+                      value={selectedYear}
+                      onChange={e => setSelectedYear(Number(e.target.value))}
+                      triggerClassName="px-4 py-2 text-sm font-bold bg-white"
+                      options={Array.from({ length: CURRENT_YEAR - 1900 + 1 }, (_, i) => CURRENT_YEAR - i)
+                        .concat(availableYears)
+                        .filter((v, i, self) => self.indexOf(v) === i)
+                        .sort((a, b) => b - a)
+                        .map(y => ({ label: y, value: y }))}
+                    />
+                  </div>
                 </div>
               </div>
 

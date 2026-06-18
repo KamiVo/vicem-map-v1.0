@@ -136,14 +136,14 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, onEditDe
     }
   }, [showGeoJSON, geoData]);
 
-  const geoJsonStyle = {
+  const geoJsonStyle = React.useMemo(() => ({
     color: '#0ea5e9',
     weight: 2,
     fillColor: '#e0f2fe',
     fillOpacity: 0.1,
     dashArray: '4 6',
     className: 'glowing-geojson'
-  };
+  }), []);
 
   const getFeatureName = (feature) => {
     if (feature.properties?.name) return feature.properties.name;
@@ -156,7 +156,7 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, onEditDe
   };
 
   // Tương tác hover trên GeoJSON
-  const onEachFeature = (feature, layer) => {
+  const onEachFeature = React.useCallback((feature, layer) => {
     const name = getFeatureName(feature);
     if (name) {
       layer.bindTooltip(`<div class="font-bold text-blue-900 text-xs px-1">${name}</div>`, {
@@ -167,27 +167,12 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, onEditDe
     }
 
     layer.on({
-      mouseover: (e) => {
-        const target = e.target;
-        target.setStyle({
-          weight: 3,
-          color: '#0284c7',
-          fillOpacity: 0.2,
-          dashArray: ''
-        });
-        if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-          target.bringToFront();
-        }
-      },
-      mouseout: (e) => {
-        e.target.setStyle(geoJsonStyle);
-      },
       contextmenu: (e) => {
         // Truyền contextmenu xuyên qua lớp GeoJSON
         if (isAdmin && onAddDealerByClick) onAddDealerByClick(e.latlng);
       }
     });
-  };
+  }, [geoJsonStyle, isAdmin, onAddDealerByClick]);
 
   const pointToLayer = (feature, latlng) => {
     return L.circleMarker(latlng, { radius: 0, opacity: 0 }); // Ẩn hoàn toàn các point markers
@@ -201,6 +186,7 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, onEditDe
   return (
     <div className="absolute inset-0 w-full h-full z-0">
       <MapContainer 
+        preferCanvas={true} // BẬT THUẬT TOÁN RENDER BẰNG HTML5 CANVAS ĐỂ TĂNG TỐC ĐỘ XỬ LÝ ĐỒ HỌA LÊN HÀNG TRĂM LẦN SO VỚI SVG
         center={daNangCenter} 
         zoom={defaultZoom} 
         style={{ width: '100%', height: '100%' }}

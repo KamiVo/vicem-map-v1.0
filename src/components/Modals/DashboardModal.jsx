@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaTimes, FaSync, FaMapMarkerAlt, FaPhoneAlt, FaBoxOpen, FaSpinner, FaCog, FaEdit } from 'react-icons/fa';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { fetchSalesData, fetchProducts, fetchAllSalesYears } from '../../services/firebase';
+import CustomSelect from '../UI/CustomSelect';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -183,16 +184,13 @@ const DashboardModal = ({ dealer, onClose, onOpenDataManager, onEditDealer, isAd
                   </h3>
                   <p className="text-xs font-bold text-gray-500 mt-2 uppercase tracking-wider">Lũy kế từng tháng & Tổng năm</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <select
+                <div className="flex items-center gap-2 w-32">
+                  <CustomSelect
                     value={selectedYear}
                     onChange={e => setSelectedYear(Number(e.target.value))}
-                    className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-bold text-gray-800 outline-none focus:ring-2 focus:ring-orange-400"
-                  >
-                    {availableYears.map(y => (
-                      <option key={y} value={y}>{y}</option>
-                    ))}
-                  </select>
+                    triggerClassName="px-3 py-1.5 text-sm font-bold bg-white"
+                    options={availableYears.map(y => ({ label: y, value: y }))}
+                  />
                 </div>
               </div>
 
