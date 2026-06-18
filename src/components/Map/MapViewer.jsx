@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Tooltip, GeoJSON, LayersControl, ZoomControl, useMap, useMapEvents } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -25,12 +26,12 @@ const ResetViewControl = ({ center, zoom }) => {
 };
 
 // Map Events
-const MapEvents = ({ onAddDealerByClick, selectedLocation, setZoomLevel }) => {
+const MapEvents = ({ onAddDealerByClick, selectedLocation, setZoomLevel, isAdmin }) => {
   const map = useMap();
   
   useMapEvents({
     contextmenu(e) {
-      if (onAddDealerByClick) {
+      if (isAdmin && onAddDealerByClick) {
         onAddDealerByClick(e.latlng);
       }
     },
@@ -117,7 +118,7 @@ const getLocationIcon = () => {
   });
 };
 
-const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, selectedLocation, onSelectLocation, onOpenDashboard }) => {
+const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, onEditDealer, onDeleteDealer, selectedLocation, onSelectLocation, onOpenDashboard, isAdmin }) => {
   const [geoData, setGeoData] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(12);
   
@@ -183,7 +184,7 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, selected
       },
       contextmenu: (e) => {
         // Truyền contextmenu xuyên qua lớp GeoJSON
-        if (onAddDealerByClick) onAddDealerByClick(e.latlng);
+        if (isAdmin && onAddDealerByClick) onAddDealerByClick(e.latlng);
       }
     });
   };
@@ -213,7 +214,12 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, selected
         zoomDelta={0.5}
       >
         <ZoomControl position="topright" />
-        <MapEvents onAddDealerByClick={onAddDealerByClick} selectedLocation={selectedLocation} setZoomLevel={setZoomLevel} />
+        <MapEvents 
+          onAddDealerByClick={onAddDealerByClick} 
+          selectedLocation={selectedLocation} 
+          setZoomLevel={setZoomLevel}
+          isAdmin={isAdmin}
+        />
         
         <LayersControl position="topright">
           <BaseLayer name="Bản đồ Đường phố (OSM)">
@@ -254,8 +260,14 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, selected
           />
         )}
 
-        {markersToRender.map((dealer) => {
-          if (!dealer.lat || !dealer.lng) return null;
+        <MarkerClusterGroup
+          chunkedLoading
+          maxClusterRadius={50}
+          spiderfyOnMaxZoom={true}
+          showCoverageOnHover={false}
+        >
+          {markersToRender.map((dealer) => {
+            if (!dealer.lat || !dealer.lng) return null;
           const isSelected = selectedLocation && selectedLocation.id === dealer.id;
           return (
             <Marker 
@@ -295,6 +307,7 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, selected
             </Marker>
           );
         })}
+        </MarkerClusterGroup>
 
         {selectedLocation && selectedLocation.type === 'location' && (
           <Marker 

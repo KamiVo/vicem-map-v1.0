@@ -1,11 +1,13 @@
 import React from 'react';
 import danangAdmin from '../../assets/danang_admin.json';
-import { FaMapMarkedAlt, FaArrowLeft, FaStore, FaMapMarkerAlt, FaPhoneAlt, FaMap, FaTimes } from 'react-icons/fa';
+import { FaMapMarkedAlt, FaArrowLeft, FaStore, FaMapMarkerAlt, FaPhoneAlt, FaMap, FaTimes, FaLock, FaUnlock } from 'react-icons/fa';
 import SearchBar from './SearchBar';
+import { useAuth } from '../../context/AuthContext';
 
 const districtsList = Object.keys(danangAdmin);
 
-const Sidebar = ({ filters, setFilters, showGeoJSON, setShowGeoJSON, dealers, onOpenAddModal, selectedLocation, onSelectLocation, onClearSelection, onEditDealer, onDeleteDealer, isSidebarOpen, setIsSidebarOpen }) => {
+const Sidebar = ({ filters, setFilters, showGeoJSON, setShowGeoJSON, dealers, onOpenAddModal, selectedLocation, onSelectLocation, onClearSelection, onEditDealer, onDeleteDealer, isSidebarOpen, setIsSidebarOpen, isAdmin, onOpenLogin }) => {
+  const { logout } = useAuth();
 
 
   const renderLocationDetails = () => {
@@ -42,24 +44,26 @@ const Sidebar = ({ filters, setFilters, showGeoJSON, setShowGeoJSON, dealers, on
           </div>
         </div>
 
-        <div className="p-4 bg-white mt-2 shrink-0 border-t border-gray-100">
-          <button
-            onClick={() => onOpenAddModal(
-              { lat: loc.lat, lng: loc.lng }, 
-              { address: loc.name, fullAddress: loc.address }
-            )}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl text-sm font-bold transition-colors shadow-md shadow-blue-500/30 flex items-center justify-center gap-2"
-          >
-            <FaStore />
-            Thêm đại lý tại đây
-          </button>
-        </div>
+        {isAdmin && (
+          <div className="p-4 bg-white mt-2 shrink-0 border-t border-gray-100">
+            <button
+              onClick={() => onOpenAddModal(
+                { lat: loc.lat, lng: loc.lng }, 
+                { address: loc.name, fullAddress: loc.address }
+              )}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl text-sm font-bold transition-colors shadow-md shadow-blue-500/30 flex items-center justify-center gap-2"
+            >
+              <FaStore />
+              Thêm đại lý tại đây
+            </button>
+          </div>
+        )}
       </div>
     );
   };
 
   return (
-    <div className={`fixed md:relative top-0 left-0 h-full md:h-[calc(100vh-2rem)] md:my-4 md:ml-4 w-[85%] sm:w-[350px] md:w-[400px] bg-white/85 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] border border-white/50 z-[2000] flex flex-col transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${isSidebarOpen ? 'translate-x-0 md:translate-x-0 md:ml-4' : '-translate-x-full md:-translate-x-full md:-ml-[420px]'} rounded-r-2xl md:rounded-3xl overflow-hidden shrink-0`}>
+    <div className={`pointer-events-auto fixed md:relative top-0 left-0 h-full md:h-[calc(100vh-2rem)] md:my-4 md:ml-4 w-[85%] sm:w-[350px] md:w-[400px] bg-white/85 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] border border-white/50 z-[2000] flex flex-col transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${isSidebarOpen ? 'translate-x-0 md:translate-x-0 md:ml-4' : '-translate-x-full md:-translate-x-full md:-ml-[420px]'} rounded-r-2xl md:rounded-3xl overflow-hidden shrink-0`}>
 
       {/* Top Search Area */}
       <div className="p-5 bg-white/40 backdrop-blur-md border-b border-white/30 shrink-0 z-20 flex items-center gap-3">
@@ -81,6 +85,13 @@ const Sidebar = ({ filters, setFilters, showGeoJSON, setShowGeoJSON, dealers, on
         <div className="flex-1">
           <SearchBar dealers={dealers} onSelectLocation={onSelectLocation} />
         </div>
+        <button 
+          onClick={isAdmin ? logout : onOpenLogin} 
+          className={`p-2.5 rounded-full transition-colors shrink-0 ${isAdmin ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-blue-500'}`} 
+          title={isAdmin ? "Đăng xuất Quản trị" : "Đăng nhập Quản trị"}
+        >
+          {isAdmin ? <FaUnlock /> : <FaLock />}
+        </button>
       </div>
 
       {selectedLocation && selectedLocation.type !== 'dealer' ? renderLocationDetails() : (

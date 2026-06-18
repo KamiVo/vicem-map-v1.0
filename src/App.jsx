@@ -6,8 +6,12 @@ import ManualAddModal from './components/Modals/ManualAddModal';
 import { fetchDealersFromDB, deleteDealerFromDB } from './services/firebase';
 import DashboardModal from './components/Modals/DashboardModal';
 import DataManagementModal from './components/Modals/DataManagementModal';
+import LoginModal from './components/Modals/LoginModal';
+import { useAuth } from './context/AuthContext';
 
 const App = () => {
+  const { isAdmin } = useAuth();
+  
   // Master state
   const [dealers, setDealers] = useState([]);
   
@@ -25,6 +29,7 @@ const App = () => {
   const [modalEditData, setModalEditData] = useState(null);
   const [dashboardDealer, setDashboardDealer] = useState(null);
   const [dataManagerDealer, setDataManagerDealer] = useState(null);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   // Selected Location State (Dealer or Nominatim Place)
   const [selectedLocation, setSelectedLocation] = useState(null);
@@ -105,24 +110,24 @@ const App = () => {
 
       {/* Sidebar overlays the map */}
       <div className="absolute top-0 left-0 h-full z-[2000] pointer-events-none flex">
-        <div className="pointer-events-auto h-full">
-          <Sidebar 
-            filters={filters}
-            setFilters={setFilters}
-            showGeoJSON={showGeoJSON}
-            setShowGeoJSON={setShowGeoJSON}
-            dealers={filteredDealers} 
-            onDataImported={loadData}
-            onOpenAddModal={openAddModal}
-            selectedLocation={selectedLocation}
-            onSelectLocation={handleSelectLocation}
-            onClearSelection={() => setSelectedLocation(null)}
-            onEditDealer={openEditModal}
-            onDeleteDealer={handleDeleteDealer}
-            isSidebarOpen={isSidebarOpen}
-            setIsSidebarOpen={setIsSidebarOpen}
-          />
-        </div>
+        <Sidebar 
+          filters={filters}
+          setFilters={setFilters}
+          showGeoJSON={showGeoJSON}
+          setShowGeoJSON={setShowGeoJSON}
+          dealers={filteredDealers} 
+          onDataImported={loadData}
+          onOpenAddModal={openAddModal}
+          selectedLocation={selectedLocation}
+          onSelectLocation={handleSelectLocation}
+          onClearSelection={() => setSelectedLocation(null)}
+          onEditDealer={openEditModal}
+          onDeleteDealer={handleDeleteDealer}
+          isSidebarOpen={isSidebarOpen}
+          setIsSidebarOpen={setIsSidebarOpen}
+          isAdmin={isAdmin}
+          onOpenLogin={() => setIsLoginModalOpen(true)}
+        />
       </div>
       
       {/* Map is absolutely positioned to take the whole screen */}
@@ -149,6 +154,7 @@ const App = () => {
           selectedLocation={selectedLocation}
           onSelectLocation={handleSelectLocation}
           onOpenDashboard={(dealer) => setDashboardDealer(dealer)}
+          isAdmin={isAdmin}
         />
       </div>
 
@@ -167,7 +173,7 @@ const App = () => {
           setSelectedLocation(null);
         }}
       />
-      {/* SỬA PHẦN NÀY */}
+      
       {dashboardDealer && (
         <DashboardModal 
           dealer={dashboardDealer}
@@ -180,6 +186,7 @@ const App = () => {
             openEditModal(dealer);
             setDashboardDealer(null);
           }}
+          isAdmin={isAdmin}
         />
       )}
 
@@ -189,6 +196,11 @@ const App = () => {
           onClose={() => setDataManagerDealer(null)}
         />
       )}
+
+      <LoginModal 
+        isOpen={isLoginModalOpen} 
+        onClose={() => setIsLoginModalOpen(false)} 
+      />
     </div>
   );
 };

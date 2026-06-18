@@ -5,7 +5,7 @@ import { fetchSalesData, fetchProducts, fetchAllSalesYears } from '../../service
 
 const CURRENT_YEAR = new Date().getFullYear();
 
-const DashboardModal = ({ dealer, onClose, onOpenDataManager, onEditDealer }) => {
+const DashboardModal = ({ dealer, onClose, onOpenDataManager, onEditDealer, isAdmin }) => {
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
   const [availableYears, setAvailableYears] = useState([CURRENT_YEAR]);
 
@@ -79,18 +79,28 @@ const DashboardModal = ({ dealer, onClose, onOpenDataManager, onEditDealer }) =>
               <p className="text-xs text-blue-200 font-medium uppercase tracking-widest mt-0.5">Hồ sơ Cửa hàng v3.0</p>
             </div>
           </div>
+          {isAdmin && (
+            <div className="flex gap-2 w-full md:w-auto mt-4 md:mt-0">
+              <button 
+                onClick={() => onEditDealer(dealer)}
+                className="flex-1 md:flex-none flex justify-center items-center gap-2 bg-white/50 hover:bg-blue-50 text-blue-700 px-4 py-2 rounded-xl text-sm font-bold border border-blue-200 shadow-sm transition-all whitespace-nowrap"
+              >
+                <FaEdit />
+                Chỉnh sửa
+              </button>
+              <button 
+                onClick={onOpenDataManager}
+                className="flex-1 md:flex-none flex justify-center items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all whitespace-nowrap"
+              >
+                <FaCog className="animate-spin-slow" />
+                Quản lý dữ liệu
+              </button>
+            </div>
+          )}
           <div className="flex items-center gap-3">
             <div className="bg-black/30 px-4 py-2 rounded-xl text-xs text-cyan-400 font-bold flex items-center gap-2 border border-cyan-500/30">
               <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span> TRỰC TUYẾN
             </div>
-            {onEditDealer && (
-              <button
-                onClick={() => onEditDealer(dealer)}
-                className="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white text-xs font-black uppercase tracking-wider px-4 py-2.5 rounded-xl transition-all shadow-[0_4px_15px_rgba(6,182,212,0.3)] hover:-translate-y-0.5"
-              >
-                <FaEdit size={14} /> Chỉnh sửa thông tin
-              </button>
-            )}
             <button onClick={onClose} className="bg-white/10 hover:bg-red-500 hover:text-white text-blue-100 p-2.5 rounded-full transition-all ml-2">
               <FaTimes size={16} />
             </button>

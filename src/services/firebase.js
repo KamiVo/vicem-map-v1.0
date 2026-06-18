@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, collection, getDocs, writeBatch, doc, getDoc, setDoc, updateDoc, deleteField, deleteDoc } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
+import { getAuth } from "firebase/auth";
 
 // Để trống các config theo yêu cầu
 const firebaseConfig = {
@@ -19,11 +20,13 @@ const isConfigValid = !!(firebaseConfig.apiKey && firebaseConfig.projectId) || i
 let app = null;
 let db = null;
 let analytics = null;
+let auth = null;
 
 if (isConfigValid) {
   try {
     app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     db = getFirestore(app);
+    auth = getAuth(app);
     // Chỉ khởi tạo Analytics khi có measurementId và chạy trên client
     if (typeof window !== "undefined" && firebaseConfig.measurementId) {
       analytics = getAnalytics(app);
@@ -38,7 +41,7 @@ if (isConfigValid) {
   );
 }
 
-export { db, deleteField };
+export { db, auth, deleteField };
 
 // Hàm tải danh sách đại lý từ Firestore
 export const fetchDealersFromDB = async () => {
