@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, collection, getDocs, writeBatch, doc, getDoc, setDoc, updateDoc, deleteField } from "firebase/firestore";
+import { getFirestore, collection, getDocs, writeBatch, doc, getDoc, setDoc, updateDoc, deleteField, deleteDoc } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
 
 // Để trống các config theo yêu cầu
@@ -73,7 +73,7 @@ export const addDealerToDB = async (dealer) => {
     throw new Error("Firebase chưa được cấu hình. Vui lòng kiểm tra file .env.");
   }
   const dealerRef = doc(collection(db, "dealers"));
-  await writeBatch(db).set(dealerRef, dealer).commit();
+  await setDoc(dealerRef, dealer);
 };
 
 // Hàm cập nhật 1 đại lý
@@ -82,7 +82,7 @@ export const updateDealerInDB = async (id, data) => {
     throw new Error("Firebase chưa được cấu hình. Vui lòng kiểm tra file .env.");
   }
   const dealerRef = doc(db, "dealers", id);
-  await writeBatch(db).update(dealerRef, data).commit();
+  await updateDoc(dealerRef, data);
 };
 
 // Hàm xóa 1 đại lý
@@ -91,7 +91,7 @@ export const deleteDealerFromDB = async (id) => {
     throw new Error("Firebase chưa được cấu hình. Vui lòng kiểm tra file .env.");
   }
   const dealerRef = doc(db, "dealers", id);
-  await writeBatch(db).delete(dealerRef).commit();
+  await deleteDoc(dealerRef);
 };
 
 // Hàm xóa toàn bộ đại lý (Dùng cho Load Test)
@@ -180,5 +180,5 @@ export const saveProduct = async (dealerId, product) => {
 export const deleteProduct = async (dealerId, productId) => {
   if (!db) throw new Error("Firebase chưa được cấu hình.");
   const ref = doc(db, "dealers", dealerId, "products", productId);
-  await writeBatch(db).delete(ref).commit();
+  await deleteDoc(ref);
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, GeoJSON, LayersControl, ZoomControl, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, GeoJSON, LayersControl, ZoomControl, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -25,7 +25,7 @@ const ResetViewControl = ({ center, zoom }) => {
 };
 
 // Map Events
-const MapEvents = ({ onAddDealerByClick, selectedLocation }) => {
+const MapEvents = ({ onAddDealerByClick, selectedLocation, setZoomLevel }) => {
   const map = useMap();
   
   useMapEvents({
@@ -33,6 +33,9 @@ const MapEvents = ({ onAddDealerByClick, selectedLocation }) => {
       if (onAddDealerByClick) {
         onAddDealerByClick(e.latlng);
       }
+    },
+    zoomend() {
+      setZoomLevel(map.getZoom());
     }
   });
 
@@ -45,29 +48,56 @@ const MapEvents = ({ onAddDealerByClick, selectedLocation }) => {
   return null;
 };
 
-// Tạo Custom Icon cho Đại lý
+// --- TỐI ƯU HÓA O(1) CHO KHỞI TẠO ICON ---
+// Caching lại các đối tượng icon đã tạo để không bắt Leaflet phải parse lại chuỗi HTML.
+const iconCache = new Map();
+
 const getDealerIcon = (status, isSelected) => {
-  const isSold = status === 'Đã bán';
-  const colorClass = isSold ? 'text-emerald-600' : 'text-rose-600';
-  const bgClass = isSold ? 'bg-emerald-100' : 'bg-rose-100';
-  const borderClass = isSold ? 'border-emerald-500' : 'border-rose-500';
+  const cacheKey = `${status}_${isSelected}`;
+  if (iconCache.has(cacheKey)) {
+    return iconCache.get(cacheKey);
+  }
+
+  let colorClass, bgClass, borderClass;
+
+  if (status === 'Đại lý tốt') {
+    colorClass = 'text-emerald-600';
+    bgClass = 'bg-emerald-100';
+    borderClass = 'border-emerald-500';
+  } else if (status === 'Đại lý chưa bán') {
+    colorClass = 'text-rose-600';
+    bgClass = 'bg-rose-100';
+    borderClass = 'border-rose-500';
+  } else if (status === 'Đại lý rủi ro') {
+    colorClass = 'text-amber-600';
+    bgClass = 'bg-amber-100';
+    borderClass = 'border-amber-500';
+  } else {
+    colorClass = 'text-slate-800';
+    bgClass = 'bg-slate-200';
+    borderClass = 'border-slate-800';
+  }
+
   const sizeClass = isSelected ? 'w-10 h-10 border-[3px] shadow-2xl scale-110' : 'w-8 h-8 border-[2.5px] shadow-lg';
 
   const iconHtml = `
     <div class="relative flex items-center justify-center ${sizeClass} rounded-full ${bgClass} ${borderClass} transform transition-all duration-300 hover:scale-125 z-10">
-      <svg class="w-1/2 h-1/2 ${colorClass}" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+      <svg class="w-[55%] h-[55%] ${colorClass}" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/>
       </svg>
       ${isSelected ? `<span class="absolute -top-1 -right-1 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span></span>` : ''}
     </div>
   `;
 
-  return L.divIcon({
+  const icon = L.divIcon({
     html: iconHtml,
     className: 'bg-transparent border-none',
     iconSize: isSelected ? [40, 40] : [32, 32],
     iconAnchor: isSelected ? [20, 40] : [16, 32]
   });
+
+  iconCache.set(cacheKey, icon);
+  return icon;
 };
 
 const getLocationIcon = () => {
@@ -89,6 +119,7 @@ const getLocationIcon = () => {
 
 const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, selectedLocation, onSelectLocation, onOpenDashboard }) => {
   const [geoData, setGeoData] = useState(null);
+  const [zoomLevel, setZoomLevel] = useState(12);
   
   // Tọa độ trung tâm mặc định Đà Nẵng
   const daNangCenter = [16.0544, 108.2022];
@@ -105,11 +136,12 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, selected
   }, [showGeoJSON, geoData]);
 
   const geoJsonStyle = {
-    color: '#3b82f6',
-    weight: 1.5,
-    fillColor: '#60a5fa',
+    color: '#0ea5e9',
+    weight: 2,
+    fillColor: '#e0f2fe',
     fillOpacity: 0.1,
-    dashArray: '4'
+    dashArray: '4 6',
+    className: 'glowing-geojson'
   };
 
   const getFeatureName = (feature) => {
@@ -138,8 +170,8 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, selected
         const target = e.target;
         target.setStyle({
           weight: 3,
-          color: '#2563eb',
-          fillOpacity: 0.25,
+          color: '#0284c7',
+          fillOpacity: 0.2,
           dashArray: ''
         });
         if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
@@ -160,16 +192,10 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, selected
     return L.circleMarker(latlng, { radius: 0, opacity: 0 }); // Ẩn hoàn toàn các point markers
   };
 
-  // Logic hiển thị Marker
-  const isFiltered = filters.district !== '' || filters.ward !== '';
-  let markersToRender = [];
-
-  if (isFiltered) {
-    markersToRender = dealers;
-  } else if (selectedLocation && selectedLocation.type === 'dealer') {
-    // Nếu không có filter nhưng đang chọn 1 đại lý, chỉ hiện đại lý đó
-    markersToRender = dealers.filter(d => d.id === selectedLocation.id);
-  }
+  // Tối ưu hóa: Đưa logic tính toán mảng hiển thị vào useMemo (O(1) cached)
+  const markersToRender = React.useMemo(() => {
+    return dealers; // Lọc đã được thực hiện ở App.jsx. Luôn hiển thị tất cả các dealer đã lọc.
+  }, [dealers]);
 
   return (
     <div className="absolute inset-0 w-full h-full z-0">
@@ -182,12 +208,15 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, selected
         maxBoundsViscosity={1.0}
         minZoom={10} // Đã tăng từ 6 lên 10 để KHÔNG thể zoom out ra ngoài quá xa khu vực miền Trung
         maxZoom={20} // Tăng mức zoom cận cảnh
+        wheelPxPerZoomLevel={120} // Giảm độ nhạy cuộn chuột
+        zoomSnap={0.5}
+        zoomDelta={0.5}
       >
         <ZoomControl position="topright" />
-        <MapEvents onAddDealerByClick={onAddDealerByClick} selectedLocation={selectedLocation} />
+        <MapEvents onAddDealerByClick={onAddDealerByClick} selectedLocation={selectedLocation} setZoomLevel={setZoomLevel} />
         
         <LayersControl position="topright">
-          <BaseLayer checked name="Bản đồ Đường phố (OSM)">
+          <BaseLayer name="Bản đồ Đường phố (OSM)">
             <TileLayer
               attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a>'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -205,7 +234,7 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, selected
               maxNativeZoom={19}
             />
           </BaseLayer>
-          <BaseLayer name="Bản đồ Trắng/Đen (CartoDB)">
+          <BaseLayer checked name="Bản đồ Hiện đại (CartoDB)">
             <TileLayer
               attribution='&copy; <a href="https://carto.com/">CARTO</a>'
               url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
@@ -237,18 +266,29 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, selected
                 click: () => onSelectLocation({ ...dealer, type: 'dealer' }) 
               }}
             >
+              {zoomLevel >= 14 && (
+                <Tooltip direction="top" offset={[0, -15]} opacity={1} permanent className="bg-white/90 backdrop-blur border border-white/50 shadow-md font-bold text-xs uppercase tracking-wider text-blue-900 rounded-lg px-2.5 py-1 transition-opacity">
+                  {dealer.name}
+                </Tooltip>
+              )}
               <Popup offset={[0, -20]} className="custom-popup">
-                <div className="p-1 min-w-[200px]">
-                  <h3 className="font-bold text-gray-900 text-sm mb-1 leading-tight">{dealer.name}</h3>
-                  <p className="text-[11px] text-gray-500 mb-3 line-clamp-2">{dealer.address}</p>
+                <div className="p-2 min-w-[260px]">
+                  <h3 className="font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-cyan-500 text-sm mb-3 leading-tight drop-shadow-sm">{dealer.name}</h3>
+                  <div className="text-xs md:text-sm text-gray-600 mb-4 space-y-2 font-medium">
+                    <p className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span> <span className="font-bold text-gray-800">Chủ:</span> {dealer.owner || 'Chưa cập nhật'}</p>
+                    <p className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span> <span className="font-bold text-gray-800">Số điện thoại:</span> {dealer.phone || 'Chưa cập nhật'}</p>
+                    <p className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span> <span className="font-bold text-gray-800">Năm thành lập:</span> {dealer.establishedYear || 'Chưa cập nhật'} {dealer.founder ? `(${dealer.founder})` : ''}</p>
+                    <p className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span> <span className="font-bold text-gray-800">Tình trạng đất:</span> {dealer.landStatus || 'Đang thuê'}</p>
+                    <p className="flex items-start gap-2"><span className="w-1.5 h-1.5 bg-blue-400 rounded-full mt-1.5 shrink-0"></span> <span className="font-bold text-gray-800 shrink-0">Địa chỉ:</span> <span className="line-clamp-2">{dealer.address}{dealer.ward ? `, ${dealer.ward}` : ''}, Quận {dealer.district}</span></p>
+                  </div>
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
                       if (onOpenDashboard) onOpenDashboard(dealer);
                     }}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-xs font-bold transition-colors shadow-sm"
+                    className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold py-2.5 rounded-xl transition-all shadow-[0_4px_15px_rgba(59,130,246,0.3)] hover:shadow-[0_4px_20px_rgba(34,211,238,0.4)] hover:-translate-y-0.5 text-xs uppercase tracking-wider"
                   >
-                    Xem chi tiết
+                    Xem Chi Tiết & Hàng Hóa
                   </button>
                 </div>
               </Popup>

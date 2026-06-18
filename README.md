@@ -13,11 +13,11 @@
 ![Firebase](https://img.shields.io/badge/Firebase-12.14-orange)
 
 ## ✨ Tính năng nổi bật
-* 📱 **Thiết kế Responsive (Mobile-First):** Giao diện tương thích hoàn hảo trên điện thoại, máy tính bảng với UI ngăn kéo trượt (Drawer) hiện đại.
-* 📍 **Bản đồ Tương tác & GeoJSON:** Hiển thị ranh giới các khu vực, quận/huyện kết hợp với hàng ngàn điểm đánh dấu (Markers) siêu mượt nhờ kĩ thuật chống nghẽn (Marker Clustering / Culling).
-* 🔎 **Tìm kiếm Thông minh:** Thanh công cụ phong cách Google Maps, gợi ý kết quả tự động và tự động điều hướng góc nhìn bản đồ.
-* 📊 **Xử lý Dữ liệu Excel (Import/Export):** Cho phép nạp dữ liệu hàng loạt cực nhanh và an toàn (sử dụng thư viện bảo mật `exceljs`).
-* ☁️ **Realtime Database:** Tương tác, cập nhật, đồng bộ hóa dữ liệu thời gian thực (Realtime CRUD) sử dụng Firebase Cloud Firestore (Batching & Chunking cho dữ liệu lớn).
+* 📱 **Thiết kế Giao diện Tương lai (HUD Glassmorphism):** Giao diện trong suốt, cực kỳ hiện đại, tối ưu hiển thị ở tỷ lệ vàng trên mọi thiết bị (Mobile/Desktop/Màn chiếu).
+* 📍 **Bản đồ Tương tác Nâng cao:** Quản lý ranh giới các khu vực, quận/huyện (chuẩn 2024 đổ về trước) với hệ thống Marker hiển thị linh hoạt theo mức độ Zoom.
+* 🔎 **Tìm kiếm & Auto-fill Thông minh:** Tích hợp bộ máy tìm kiếm địa lý, tự động phân tích và điền form (Số nhà, Tên đường) khi thêm đại lý mới.
+* 📝 **Quản lý Đại lý Chuyên sâu:** Chỉnh sửa nhanh chóng các thông tin chủ sở hữu, lịch sử đổi chủ (theo nhiệm kỳ), tình trạng đất, tình trạng bán hàng.
+* ☁️ **Realtime Database Firebase:** Đồng bộ hóa dữ liệu thời gian thực không độ trễ, tối ưu hóa băng thông bằng cách gộp state React.
 * 🧪 **Kiểm thử tự động (Unit Tests):** Đảm bảo an toàn mã nguồn với 100% Test Coverage các luồng dữ liệu quan trọng bằng Vitest.
 
 ## 🛠️ Công nghệ sử dụng
@@ -26,7 +26,7 @@
 * **Bản đồ (Mapping):** Leaflet & React-Leaflet
 * **Backend as a Service:** Firebase (Firestore & Hosting)
 * **Testing:** Vitest & React Testing Library
-* **Tiện ích:** ExcelJS (Xử lý Excel), React-Icons
+* **Tiện ích:** React-Icons
 
 ## 🚀 Hướng dẫn Cài đặt & Chạy trên máy cá nhân (Local)
 
@@ -57,7 +57,7 @@ npm run dev
 ```
 
 ## 🧪 Chạy Kiểm thử (Testing)
-Dự án được tích hợp sẵn các Unit Test để kiểm tra độ ổn định khi tương tác với Firebase Mock, Excel Logic, và Responsive UI:
+Dự án được tích hợp sẵn các Unit Test để kiểm tra độ ổn định khi tương tác với Firebase Mock, và Responsive UI:
 ```bash
 npm run test
 ```
@@ -91,11 +91,11 @@ An interactive web-based map application designed to manage, visualize, and sear
 ![Firebase](https://img.shields.io/badge/Firebase-12.14-orange)
 
 ## ✨ Key Features
-* 📱 **Responsive Design (Mobile-First):** Perfectly adapted for smartphones and tablets featuring a modern sliding Drawer UI.
-* 📍 **Interactive Map & GeoJSON:** Displays regional boundaries (districts/wards) combined with thousands of high-performance markers using anti-clogging techniques (Marker Clustering / Culling).
-* 🔎 **Smart Search:** Google Maps style toolbar with auto-suggestions and automatic map viewpoint navigation.
-* 📊 **Excel Data Handling (Import/Export):** Allows ultra-fast and secure bulk data imports (utilizing the secure `exceljs` library).
-* ☁️ **Realtime Database:** Real-time data interaction, updates, and synchronization (Realtime CRUD) using Firebase Cloud Firestore (with Batching & Chunking capabilities for large datasets).
+* 📱 **Futuristic Design (HUD Glassmorphism):** Transparent, ultra-modern interface, optimized for the golden ratio across all devices (Mobile/Desktop/Projectors).
+* 📍 **Advanced Interactive Map:** Manages regional boundaries with dynamic Marker display based on Zoom levels.
+* 🔎 **Smart Search & Auto-fill:** Integrated geocoding search engine that automatically parses and fills forms (House number, Street) when adding new dealers.
+* 📝 **In-depth Dealer Management:** Quickly edit owner information, track ownership history (by terms), land status, and sales status.
+* ☁️ **Realtime Database Firebase:** Zero-latency real-time data synchronization, bandwidth-optimized via React state merging.
 * 🧪 **Automated Testing (Unit Tests):** Ensures codebase safety with 100% Test Coverage for critical data workflows using Vitest.
 
 ## 🛠️ Technologies Used
@@ -104,7 +104,7 @@ An interactive web-based map application designed to manage, visualize, and sear
 * **Mapping:** Leaflet & React-Leaflet
 * **Backend as a Service:** Firebase (Firestore & Hosting)
 * **Testing:** Vitest & React Testing Library
-* **Utilities:** ExcelJS (Excel handling), React-Icons
+* **Utilities:** React-Icons
 
 ## 🚀 Installation & Local Development
 
@@ -135,7 +135,7 @@ npm run dev
 ```
 
 ## 🧪 Testing
-The project includes Unit Tests to ensure stability when interacting with Firebase Mocks, Excel Logic, and Responsive UI components:
+The project includes Unit Tests to ensure stability when interacting with Firebase Mocks, and Responsive UI components:
 ```bash
 npm run test
 ```

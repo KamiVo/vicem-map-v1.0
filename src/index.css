@@ -1,13 +1,105 @@
 @import "tailwindcss";
 
-/* Custom map popup styles */
-.vicem-popup .leaflet-popup-content-wrapper {
-  padding: 0;
-  border-radius: 0.5rem;
-  overflow: hidden;
+@layer base {
+  html {
+    font-family: 'Inter', sans-serif;
+  }
 }
 
-.vicem-popup .leaflet-popup-content {
+/* --- Tối ưu hóa Scrollbar kiểu Hiện đại --- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.4);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.6);
+}
+
+/* --- Leaflet Map Overrides - Glassmorphism --- */
+
+/* Loại bỏ hoàn toàn nền trắng cổ điển của Popup */
+.custom-popup .leaflet-popup-content-wrapper {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.2);
+  border-radius: 1rem;
+  padding: 0;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.custom-popup .leaflet-popup-content {
   margin: 0;
-  padding: 0.75rem;
+  padding: 1rem;
+}
+
+/* Làm mũi tên trỏ (Tip) của Popup trở nên trong suốt */
+.custom-popup .leaflet-popup-tip {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.2);
+}
+
+/* Tùy chỉnh Nút Đóng của Leaflet */
+.custom-popup .leaflet-popup-close-button {
+  top: 10px !important;
+  right: 10px !important;
+  color: #6b7280 !important;
+  font-size: 1.25rem !important;
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 50% !important;
+  background: rgba(243, 244, 246, 0.8) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  transition: all 0.2s !important;
+}
+
+.custom-popup .leaflet-popup-close-button:hover {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+/* Tooltip (Tên hiển thị vĩnh viễn) Glassmorphism */
+.leaflet-tooltip.bg-white\/90 {
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 0.5rem !important;
+  font-family: 'Outfit', sans-serif !important;
+  color: #1e3a8a !important; /* blue-900 */
+}
+
+.leaflet-tooltip-top:before {
+  border-top-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Các Animation dùng chung */
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Hiệu ứng GeoJSON phát sáng */
+.glowing-geojson {
+  filter: drop-shadow(0 0 6px rgba(14, 165, 233, 0.8));
+  transition: all 0.3s ease;
 }

@@ -1,19 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { FaBars } from 'react-icons/fa';
-import Sidebar from './components/Sidebar';
+import Sidebar from './components/Sidebar/Sidebar';
 import MapViewer from './components/Map/MapViewer';
-import ManualAddModal from './components/ManualAddModal';
+import ManualAddModal from './components/Modals/ManualAddModal';
 import { fetchDealersFromDB, deleteDealerFromDB } from './services/firebase';
-import DashboardModal from './components/DashboardModal';
-import DataManagementModal from './components/DataManagementModal';
+import DashboardModal from './components/Modals/DashboardModal';
+import DataManagementModal from './components/Modals/DataManagementModal';
 
 const App = () => {
   // Master state
   const [dealers, setDealers] = useState([]);
-  const [filteredDealers, setFilteredDealers] = useState([]);
   
   // UI State
-  const [showGeoJSON, setShowGeoJSON] = useState(false);
+  const [showGeoJSON, setShowGeoJSON] = useState(true);
   const [filters, setFilters] = useState({
     district: '',
     ward: '',
@@ -30,15 +29,15 @@ const App = () => {
   // Selected Location State (Dealer or Nominatim Place)
   const [selectedLocation, setSelectedLocation] = useState(null);
 
-  // Mobile Responsive State
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  // Responsive State
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const handleSelectLocation = (loc) => {
     setSelectedLocation(loc);
-    setIsMobileSidebarOpen(true); // Tự động mở Sidebar trên mobile khi click marker
+    setIsSidebarOpen(true); // Mở Sidebar khi click marker
   };
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const data = await fetchDealersFromDB();
       setDealers(data);
@@ -47,42 +46,35 @@ const App = () => {
       alert("Không thể kết nối đến dữ liệu Firebase. Vui lòng kiểm tra kết nối mạng hoặc cấu hình máy chủ.");
       setDealers([]);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadData();
   }, []);
 
-  // Observer lắng nghe Filter thay đổi (Marker Clutter logic)
-  useEffect(() => {
-    let result = dealers;
-
-    if (filters.district) {
-      result = result.filter(d => d.district === filters.district);
-    }
-    if (filters.ward) {
-      result = result.filter(d => d.ward && d.ward.toLowerCase().includes(filters.ward.toLowerCase()));
-    }
-    if (filters.status !== 'Tất cả') {
-      result = result.filter(d => d.status === filters.status);
-    }
-
-    setFilteredDealers(result);
+  // Tối ưu hóa thuật toán lọc bằng O(N) single-pass với useMemo thay vì useEffect gây double-render
+  const filteredDealers = useMemo(() => {
+    return dealers.filter(d => {
+      if (filters.district && d.district !== filters.district) return false;
+      if (filters.ward && d.ward && !d.ward.toLowerCase().includes(filters.ward.toLowerCase())) return false;
+      if (filters.status !== 'Tất cả' && d.status !== filters.status) return false;
+      return true;
+    });
   }, [dealers, filters]);
 
-  const openAddModal = (coords = null) => {
+  const openAddModal = useCallback((coords = null, locData = null) => {
     setModalEditData(null);
-    setModalCoords(coords);
+    setModalCoords({ ...coords, ...locData });
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const openEditModal = (dealer) => {
+  const openEditModal = useCallback((dealer) => {
     setModalEditData(dealer);
     setModalCoords(null);
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const handleDeleteDealer = async (id) => {
+  const handleDeleteDealer = useCallback(async (id) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa đại lý này không?")) {
       try {
         await deleteDealerFromDB(id);
@@ -92,45 +84,61 @@ const App = () => {
         alert("Có lỗi xảy ra khi xóa.");
       }
     }
-  };
+  }, [loadData]);
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-gray-100 font-sans flex">
+    <div className="relative w-screen h-screen overflow-hidden bg-gray-100 font-sans">
       
-      {/* Nút Hamburger nổi trên Map (chỉ hiện trên Mobile) */}
+      {/* Nút Hamburger hiện góc trên trái màn hình khi Sidebar đóng */}
       <button 
-        onClick={() => setIsMobileSidebarOpen(true)}
-        className="md:hidden absolute top-4 left-4 z-[1500] bg-white p-3 rounded-full shadow-lg border border-gray-200 text-blue-600 hover:bg-gray-50 transition-all"
+        onClick={() => setIsSidebarOpen(true)}
+        className={`absolute top-4 left-4 z-[1500] bg-white p-3 rounded-full shadow-lg border border-gray-200 text-blue-600 hover:bg-gray-50 transition-all ${isSidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
       >
         <FaBars size={20} />
       </button>
 
       {/* Lớp nền đen mờ khi mở Sidebar trên Mobile */}
-      {isMobileSidebarOpen && (
-        <div 
-          className="md:hidden fixed inset-0 bg-black/40 z-[1900] transition-opacity"
-          onClick={() => setIsMobileSidebarOpen(false)}
-        />
-      )}
-
-      <Sidebar 
-        filters={filters}
-        setFilters={setFilters}
-        showGeoJSON={showGeoJSON}
-        setShowGeoJSON={setShowGeoJSON}
-        dealers={filteredDealers} 
-        onDataImported={loadData}
-        onOpenAddModal={() => openAddModal()}
-        selectedLocation={selectedLocation}
-        onSelectLocation={handleSelectLocation}
-        onClearSelection={() => setSelectedLocation(null)}
-        onEditDealer={openEditModal}
-        onDeleteDealer={handleDeleteDealer}
-        isMobileSidebarOpen={isMobileSidebarOpen}
-        setIsMobileSidebarOpen={setIsMobileSidebarOpen}
+      <div 
+        className={`md:hidden fixed inset-0 bg-black/40 z-[1900] transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+        onClick={() => setIsSidebarOpen(false)}
       />
+
+      {/* Sidebar overlays the map */}
+      <div className="absolute top-0 left-0 h-full z-[2000] pointer-events-none flex">
+        <div className="pointer-events-auto h-full">
+          <Sidebar 
+            filters={filters}
+            setFilters={setFilters}
+            showGeoJSON={showGeoJSON}
+            setShowGeoJSON={setShowGeoJSON}
+            dealers={filteredDealers} 
+            onDataImported={loadData}
+            onOpenAddModal={openAddModal}
+            selectedLocation={selectedLocation}
+            onSelectLocation={handleSelectLocation}
+            onClearSelection={() => setSelectedLocation(null)}
+            onEditDealer={openEditModal}
+            onDeleteDealer={handleDeleteDealer}
+            isSidebarOpen={isSidebarOpen}
+            setIsSidebarOpen={setIsSidebarOpen}
+          />
+        </div>
+      </div>
       
-      <div className="flex-1 relative h-full">
+      {/* Map is absolutely positioned to take the whole screen */}
+      <div className="absolute inset-0 z-0">
+        {/* Lời chào trên màn chiếu (HUD Glass Ribbon) */}
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1500] pointer-events-none w-full px-6 flex justify-center">
+          <div className="relative group">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full blur-md opacity-30 group-hover:opacity-60 transition duration-500"></div>
+            <h1 className="relative text-[10px] sm:text-xs md:text-base lg:text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-rose-400 uppercase tracking-[0.2em] bg-white/70 backdrop-blur-xl px-10 py-3 rounded-full border border-white/60 shadow-[0_8px_32px_rgba(225,29,72,0.15)] flex items-center gap-3">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0"></span>
+              <span className="truncate">NGHỆ GIANG XIN CHÀO VÀ TRAO CHO BẠN MỘT CƠ HỘI</span>
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0"></span>
+            </h1>
+          </div>
+        </div>
+
         <MapViewer 
           dealers={filteredDealers} 
           showGeoJSON={showGeoJSON}
@@ -153,6 +161,11 @@ const App = () => {
         }}
         initialCoords={modalCoords}
         editData={modalEditData}
+        onDeleteDealer={(id) => {
+          handleDeleteDealer(id);
+          setIsModalOpen(false);
+          setSelectedLocation(null);
+        }}
       />
       {/* SỬA PHẦN NÀY */}
       {dashboardDealer && (
@@ -161,6 +174,10 @@ const App = () => {
           onClose={() => setDashboardDealer(null)}
           onOpenDataManager={() => {
             setDataManagerDealer(dashboardDealer);
+            setDashboardDealer(null);
+          }}
+          onEditDealer={(dealer) => {
+            openEditModal(dealer);
             setDashboardDealer(null);
           }}
         />
