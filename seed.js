@@ -1,90 +1,108 @@
-import fs from 'fs';
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, writeBatch, doc } from 'firebase/firestore';
-import ExcelJS from 'exceljs';
+const PROJECT_ID = "webcement-f5861";
 
-// Đọc file .env
-const envConfig = {};
-const envFile = fs.readFileSync('.env', 'utf-8');
-envFile.split('\n').forEach(line => {
-  const [key, ...value] = line.split('=');
-  if (key && value) {
-    envConfig[key.trim()] = value.join('=').trim();
-  }
-});
+// Random data generators
+const districts = [
+  "Hải Châu", "Thanh Khê", "Sơn Trà", "Ngũ Hành Sơn", 
+  "Liên Chiểu", "Cẩm Lệ", "Hòa Vang"
+];
 
-const firebaseConfig = {
-  apiKey: envConfig.VITE_FIREBASE_API_KEY,
-  authDomain: envConfig.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: envConfig.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: envConfig.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: envConfig.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: envConfig.VITE_FIREBASE_APP_ID,
-  measurementId: envConfig.VITE_FIREBASE_MEASUREMENT_ID
+const wards = {
+  "Hải Châu": ["Hải Châu 1", "Hải Châu 2", "Thạch Thang", "Thuận Phước", "Hòa Thuận Tây"],
+  "Thanh Khê": ["Vĩnh Trung", "Tân Chính", "Thạc Gián", "Chính Gián", "Tam Thuận"],
+  "Sơn Trà": ["An Hải Tây", "An Hải Bắc", "Phước Mỹ", "Thọ Quang", "Nại Hiên Đông"],
+  "Ngũ Hành Sơn": ["Mỹ An", "Khuê Mỹ", "Hòa Hải", "Hòa Quý"],
+  "Liên Chiểu": ["Hòa Minh", "Hòa Khánh Nam", "Hòa Khánh Bắc", "Hòa Hiệp Nam"],
+  "Cẩm Lệ": ["Khuê Trung", "Hòa Thọ Đông", "Hòa Thọ Tây", "Hòa Phát"],
+  "Hòa Vang": ["Hòa Phong", "Hòa Châu", "Hòa Tiến", "Hòa Nhơn"]
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const statuses = ['Đại lý tốt', 'Đại lý chưa bán', 'Đại lý rủi ro', 'Không chào bán'];
 
-const districts = ['Hải Châu', 'Thanh Khê', 'Sơn Trà', 'Ngũ Hành Sơn', 'Liên Chiểu', 'Cẩm Lệ'];
-const statuses = ['Đã bán', 'Chưa bán', 'Ngừng bán'];
+function randomLat() { return 15.95 + Math.random() * 0.15; }
+function randomLng() { return 108.10 + Math.random() * 0.15; }
 
-const generateRandomDealer = (index) => {
+const dealers = [];
+for (let i = 1; i <= 50; i++) {
   const district = districts[Math.floor(Math.random() * districts.length)];
+  const wardList = wards[district];
+  const ward = wardList[Math.floor(Math.random() * wardList.length)];
   const status = statuses[Math.floor(Math.random() * statuses.length)];
-  // Tọa độ ngẫu nhiên khu vực Đà Nẵng
-  const lat = 16.000 + Math.random() * 0.100; // ~ 16.0 to 16.1
-  const lng = 108.150 + Math.random() * 0.080; // ~ 108.15 to 108.23
 
-  return {
-    name: `Đại lý Vật liệu số ${index + 1}`,
-    address: `${Math.floor(Math.random() * 200) + 1} Đường số ${Math.floor(Math.random() * 10) + 1}`,
-    ward: 'Phường Demo',
-    district: district,
-    phone: `09${Math.floor(10000000 + Math.random() * 90000000)}`,
-    status: status,
-    lat: lat,
-    lng: lng
-  };
-};
-
-const dealers = Array.from({ length: 50 }, (_, i) => generateRandomDealer(i));
-
-async function run() {
-  try {
-    console.log("Đang tạo file Excel...");
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Dealers');
-
-    worksheet.columns = [
-      { header: 'Tên đại lý', key: 'name', width: 30 },
-      { header: 'Địa chỉ', key: 'address', width: 30 },
-      { header: 'Phường/Xã', key: 'ward', width: 20 },
-      { header: 'Quận/Huyện', key: 'district', width: 20 },
-      { header: 'Số điện thoại', key: 'phone', width: 15 },
-      { header: 'Trạng thái', key: 'status', width: 15 },
-      { header: 'Vĩ độ (Lat)', key: 'lat', width: 15 },
-      { header: 'Kinh độ (Lng)', key: 'lng', width: 15 }
-    ];
-
-    dealers.forEach(d => worksheet.addRow(d));
-    await workbook.xlsx.writeFile('Demo_50_Dealers.xlsx');
-    console.log("Đã tạo thành công file Demo_50_Dealers.xlsx");
-
-    console.log("Đang upload 50 đại lý lên Firebase Firestore...");
-    const batch = writeBatch(db);
-    dealers.forEach(dealer => {
-      const dealerRef = doc(collection(db, "dealers"));
-      batch.set(dealerRef, dealer);
-    });
-    
-    await batch.commit();
-    console.log("Upload lên Firebase thành công!");
-    process.exit(0);
-  } catch (error) {
-    console.error("Lỗi:", error);
-    process.exit(1);
+  const chartData = [];
+  let totalSales = 0;
+  for (let m = 1; m <= 12; m++) {
+    const val = Math.floor(Math.random() * 50) + 10;
+    chartData.push({ month: "T" + m, value: val });
+    totalSales += val;
   }
+
+  const products = [
+    { id: "p1", name: "Xi măng VICEM Đa Dụng", stock: Math.floor(Math.random()*500), stockUnit: "Bao", price: 85000, priceUnit: "Bao" },
+    { id: "p2", name: "Xi măng VICEM Xây Trát", stock: Math.floor(Math.random()*300), stockUnit: "Bao", price: 75000, priceUnit: "Bao" },
+    { id: "p3", name: "Xi măng VICEM PCB40", stock: Math.floor(Math.random()*400), stockUnit: "Bao", price: 90000, priceUnit: "Bao" },
+  ];
+
+  dealers.push({
+    name: `Đại lý VLXD ${Math.random().toString(36).substring(2, 6).toUpperCase()} - Cửa hàng ${i}`,
+    address: `${Math.floor(Math.random() * 200) + 1} Đường Nguyễn Văn Linh`,
+    district: district,
+    ward: ward,
+    lat: randomLat(),
+    lng: randomLng(),
+    phone: `09${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`,
+    owner: `Chủ đại lý ${i}`,
+    establishedYear: 2010 + Math.floor(Math.random() * 14),
+    founder: `Người sáng lập ${i}`,
+    landStatus: Math.random() > 0.5 ? "Sở hữu" : "Đang thuê",
+    status: status,
+    chartData: chartData,
+    products: products,
+    createdAt: new Date().toISOString()
+  });
 }
 
-run();
+function toFirestoreFormat(obj) {
+  if (typeof obj === 'string') return { stringValue: obj };
+  if (typeof obj === 'number') return { doubleValue: obj };
+  if (typeof obj === 'boolean') return { booleanValue: obj };
+  if (Array.isArray(obj)) return { arrayValue: { values: obj.map(toFirestoreFormat) } };
+  if (typeof obj === 'object' && obj !== null) {
+    const fields = {};
+    for (const [k, v] of Object.entries(obj)) {
+      fields[k] = toFirestoreFormat(v);
+    }
+    return { mapValue: { fields } };
+  }
+  return { nullValue: null };
+}
+
+async function seed() {
+  console.log("Bắt đầu đẩy dữ liệu...");
+  let successCount = 0;
+  for (const dealer of dealers) {
+    const firestoreDoc = { fields: {} };
+    for (const [k, v] of Object.entries(dealer)) {
+      firestoreDoc.fields[k] = toFirestoreFormat(v);
+    }
+
+    try {
+      const res = await fetch(`https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/dealers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(firestoreDoc)
+      });
+      
+      if (res.ok) {
+        successCount++;
+        process.stdout.write(".");
+      } else {
+        console.error("\nLỗi:", await res.text());
+      }
+    } catch(err) {
+      console.error("\nLỗi:", err.message);
+    }
+  }
+  console.log(`\nĐã seed thành công ${successCount}/50 đại lý.`);
+}
+
+seed();

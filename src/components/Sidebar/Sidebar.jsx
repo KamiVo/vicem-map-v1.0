@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import danangAdmin from '../../assets/danang_admin.json';
-import { FaMapMarkedAlt, FaArrowLeft, FaStore, FaMapMarkerAlt, FaPhoneAlt, FaMap, FaTimes, FaLock, FaUnlock } from 'react-icons/fa';
+import { FaMapMarkedAlt, FaArrowLeft, FaStore, FaMapMarkerAlt, FaPhoneAlt, FaMap, FaTimes, FaLock, FaUnlock, FaExpand, FaCompress } from 'react-icons/fa';
 import SearchBar from './SearchBar';
 import { useAuth } from '../../context/AuthContext';
 
@@ -8,8 +8,21 @@ const districtsList = Object.keys(danangAdmin);
 
 const Sidebar = ({ filters, setFilters, showGeoJSON, setShowGeoJSON, dealers, onOpenAddModal, selectedLocation, onSelectLocation, onClearSelection, onEditDealer, onDeleteDealer, isSidebarOpen, setIsSidebarOpen, isAdmin, onOpenLogin }) => {
   const { logout } = useAuth();
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
+  useEffect(() => {
+    const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
 
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      if (document.exitFullscreen) document.exitFullscreen();
+    }
+  };
   const renderLocationDetails = () => {
     // If the location is a dealer, we don't need to show it in the sidebar
     // because the Map popup and Dashboard handle dealer details.
@@ -85,6 +98,13 @@ const Sidebar = ({ filters, setFilters, showGeoJSON, setShowGeoJSON, dealers, on
         <div className="flex-1">
           <SearchBar dealers={dealers} onSelectLocation={onSelectLocation} />
         </div>
+        <button 
+          onClick={toggleFullscreen}
+          className="p-2.5 bg-gray-50 hover:bg-gray-100 rounded-full text-gray-600 transition-colors shrink-0"
+          title={isFullscreen ? "Thu nhỏ" : "Toàn màn hình"}
+        >
+          {isFullscreen ? <FaCompress /> : <FaExpand />}
+        </button>
         <button 
           onClick={isAdmin ? logout : onOpenLogin} 
           className={`p-2.5 rounded-full transition-colors shrink-0 ${isAdmin ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-blue-500'}`} 

@@ -297,14 +297,6 @@ const DashboardModal = ({ dealer, onClose, onOpenDataManager, onEditDealer, isAd
               </div>
             )}
 
-            <div className="mt-6 pt-5 border-t border-gray-200/50">
-              <button
-                onClick={onOpenDataManager}
-                className="w-full py-4 bg-gradient-to-r from-blue-900 to-blue-800 hover:from-blue-800 hover:to-blue-700 text-white rounded-xl font-black uppercase tracking-widest text-xs transition-all shadow-lg flex items-center justify-center gap-3 hover:-translate-y-0.5 hover:shadow-[0_10px_20px_rgba(30,58,138,0.3)]"
-              >
-                <FaCog size={16} /> Quản lý Dữ liệu
-              </button>
-            </div>
           </div>
         </div>
       </div>

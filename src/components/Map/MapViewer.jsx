@@ -293,15 +293,30 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, onEditDe
                     <p className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span> <span className="font-bold text-gray-800">Tình trạng đất:</span> {dealer.landStatus || 'Đang thuê'}</p>
                     <p className="flex items-start gap-2"><span className="w-1.5 h-1.5 bg-blue-400 rounded-full mt-1.5 shrink-0"></span> <span className="font-bold text-gray-800 shrink-0">Địa chỉ:</span> <span className="line-clamp-2">{dealer.address}{dealer.ward ? `, ${dealer.ward}` : ''}, Quận {dealer.district}</span></p>
                   </div>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (onOpenDashboard) onOpenDashboard(dealer);
-                    }}
-                    className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold py-2.5 rounded-xl transition-all shadow-[0_4px_15px_rgba(59,130,246,0.3)] hover:shadow-[0_4px_20px_rgba(34,211,238,0.4)] hover:-translate-y-0.5 text-xs uppercase tracking-wider"
-                  >
-                    Xem Chi Tiết & Hàng Hóa
-                  </button>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); if (onOpenDashboard) onOpenDashboard(dealer); }}
+                      className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-md shadow-blue-500/20"
+                    >
+                      Xem chi tiết
+                    </button>
+                    {isAdmin && onEditDealer && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); onEditDealer(dealer); }}
+                        className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-xl text-xs font-bold transition-colors"
+                      >
+                        Sửa
+                      </button>
+                    )}
+                    {isAdmin && onDeleteDealer && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); onDeleteDealer(dealer.id); }}
+                        className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-xl text-xs font-bold transition-colors"
+                      >
+                        Xóa
+                      </button>
+                    )}
+                  </div>
                 </div>
               </Popup>
             </Marker>

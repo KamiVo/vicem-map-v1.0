@@ -6,6 +6,12 @@
   }
 }
 
+/* Loại bỏ khung viền đen (focus outline) khi click vào các layer ranh giới (SVG Path) trên bản đồ */
+path.leaflet-interactive:focus,
+path.leaflet-interactive {
+  outline: none !important;
+}
+
 /* --- Tối ưu hóa Scrollbar kiểu Hiện đại --- */
 ::-webkit-scrollbar {
   width: 6px;
