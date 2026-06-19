@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { addDealerToDB, updateDealerInDB, deleteField } from '../../services/firebase';
 import danangAdmin from '../../assets/danang_admin.json';
-import { geocodeAddress } from '../../utils/geocoding';
 import CustomSelect from '../UI/CustomSelect';
 
 const districtsList = Object.keys(danangAdmin);
@@ -55,7 +54,7 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData,
         ward: danangAdmin[value][0] // Reset ward when district changes
       }));
     } else if (name === 'address') {
-      setFormData(prev => ({ ...prev, address: value, resolvedLat: null, resolvedLng: null }));
+      setFormData(prev => ({ ...prev, address: value }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -65,14 +64,13 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData,
     e.preventDefault();
     setIsLoading(true);
     try {
-      let lat = formData.resolvedLat;
-      let lng = formData.resolvedLng;
+      let lat = formData.resolvedLat || formData.lat;
+      let lng = formData.resolvedLng || formData.lng;
 
-      // Nếu không chọn từ gợi ý, mới phải gọi Geocoding Fallback
       if (!lat || !lng) {
-        const coords = await geocodeAddress(formData.address, formData.ward, formData.district);
-        lat = coords.lat;
-        lng = coords.lng;
+        alert("Lỗi: Không xác định được tọa độ. Vui lòng thử lại.");
+        setIsLoading(false);
+        return;
       }
 
       let ownerHistory = editData?.ownerHistory || [];
