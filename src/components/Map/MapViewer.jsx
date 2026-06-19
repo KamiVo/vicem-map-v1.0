@@ -3,8 +3,19 @@ import { MapContainer, TileLayer, Marker, Popup, Tooltip, GeoJSON, LayersControl
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import danangAdmin from '../../assets/danang_admin.json';
 
 const { BaseLayer } = LayersControl;
+
+const getFeatureName = (feature) => {
+  if (feature.properties?.name) return feature.properties.name;
+  if (feature.properties?.['@relations']) {
+    for (const rel of feature.properties['@relations']) {
+      if (rel.reltags?.name) return rel.reltags.name;
+    }
+  }
+  return null;
+};
 
 // Custom Control để Reset View
 const ResetViewControl = ({ center, zoom }) => {
@@ -46,6 +57,38 @@ const MapEvents = ({ onAddDealerByClick, selectedLocation, setZoomLevel, isAdmin
     }
   }, [selectedLocation, map]);
 
+  return null;
+};
+
+// GeoJSON Focus Component
+const GeoJSONFocus = ({ geoData, filters }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (!geoData || (!filters?.district && !filters?.ward)) return;
+    
+    const targetWards = filters.ward ? [filters.ward] : (danangAdmin[filters.district] || []);
+    if (targetWards.length === 0) return;
+
+    const highlightedFeatures = geoData.features.filter(f => {
+      const name = getFeatureName(f);
+      if (!name) return false;
+      return targetWards.some(w => name.includes(w));
+    });
+
+    if (highlightedFeatures.length > 0) {
+      try {
+        const layer = L.geoJSON(highlightedFeatures);
+        const bounds = layer.getBounds();
+        if (bounds.isValid()) {
+          map.flyToBounds(bounds, { animate: true, duration: 1.5, padding: [50, 50] });
+        }
+      } catch (err) {
+        console.error("Lỗi khi focus GeoJSON", err);
+      }
+    }
+  }, [filters?.district, filters?.ward, geoData, map]);
+  
   return null;
 };
 
@@ -136,24 +179,36 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, onEditDe
     }
   }, [showGeoJSON, geoData]);
 
-  const geoJsonStyle = React.useMemo(() => ({
-    color: '#0ea5e9',
-    weight: 2,
-    fillColor: '#e0f2fe',
-    fillOpacity: 0.1,
-    dashArray: '4 6',
-    className: 'glowing-geojson'
-  }), []);
-
-  const getFeatureName = (feature) => {
-    if (feature.properties?.name) return feature.properties.name;
-    if (feature.properties?.['@relations']) {
-      for (const rel of feature.properties['@relations']) {
-        if (rel.reltags?.name) return rel.reltags.name;
+  const geoJsonStyle = React.useCallback((feature) => {
+    const name = getFeatureName(feature);
+    let isHighlighted = false;
+    
+    if (filters && name) {
+      const targetWards = filters.ward ? [filters.ward] : (danangAdmin[filters.district] || []);
+      if (targetWards.length > 0) {
+        isHighlighted = targetWards.some(w => name.includes(w));
       }
     }
-    return null;
-  };
+
+    if (isHighlighted) {
+      return {
+        color: '#ef4444', // Red border for highlighted
+        weight: 3,
+        fillColor: '#ef4444',
+        fillOpacity: 0.15,
+        className: 'focused-geojson transition-all duration-500'
+      };
+    }
+
+    return {
+      color: '#0ea5e9',
+      weight: 1.5,
+      fillColor: '#e0f2fe',
+      fillOpacity: 0.05,
+      dashArray: '4 6',
+      className: 'glowing-geojson transition-all duration-500'
+    };
+  }, [filters]);
 
   // Tương tác hover trên GeoJSON
   const onEachFeature = React.useCallback((feature, layer) => {
@@ -206,6 +261,7 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, onEditDe
           setZoomLevel={setZoomLevel}
           isAdmin={isAdmin}
         />
+        <GeoJSONFocus geoData={geoData} filters={filters} />
         
         <LayersControl position="topright">
           <BaseLayer name="Bản đồ Đường phố (OSM)">
