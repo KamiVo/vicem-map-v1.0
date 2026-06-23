@@ -19,13 +19,20 @@ const SearchBar = ({ dealers, onSelectLocation }) => {
     timeoutRef.current = setTimeout(async () => {
       setIsSearching(true);
 
-      // 1. Tìm trong danh sách đại lý (local)
+      // 1. Tìm trong danh sách đại lý (local) — theo tên, địa chỉ, phường, chủ, SĐT
       const lowerQuery = query.toLowerCase();
       const localMatches = dealers.filter(d =>
         d.name.toLowerCase().includes(lowerQuery) ||
         d.address.toLowerCase().includes(lowerQuery) ||
-        (d.ward && d.ward.toLowerCase().includes(lowerQuery))
-      ).map(d => ({ ...d, type: 'dealer' }));
+        (d.ward && d.ward.toLowerCase().includes(lowerQuery)) ||
+        (d.owner && d.owner.toLowerCase().includes(lowerQuery)) ||
+        (d.phone && d.phone.includes(query.trim()))
+      ).map(d => {
+        let matchField = '';
+        if (d.owner && d.owner.toLowerCase().includes(lowerQuery)) matchField = `Chủ: ${d.owner}`;
+        else if (d.phone && d.phone.includes(query.trim())) matchField = `SĐT: ${d.phone}`;
+        return { ...d, type: 'dealer', matchField };
+      });
 
       // 2. Tìm qua ArcGIS Geocoding API (Chính xác hơn với số nhà ở Việt Nam)
       try {
@@ -106,6 +113,7 @@ const SearchBar = ({ dealers, onSelectLocation }) => {
               <div className="flex-1 overflow-hidden">
                 <h4 className="text-sm font-bold text-gray-800 truncate">{res.name}</h4>
                 <p className="text-[11px] text-gray-500 line-clamp-1">{res.address}</p>
+                {res.matchField && <p className="text-[10px] text-blue-500 font-semibold mt-0.5">{res.matchField}</p>}
               </div>
             </div>
           ))}

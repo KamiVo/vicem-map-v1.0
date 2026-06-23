@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { addDealerToDB, updateDealerInDB, deleteField } from '../../services/firebase';
 import danangAdmin from '../../assets/danang_admin.json';
 import CustomSelect from '../UI/CustomSelect';
+import { validateDealer } from '../../validators/dealerValidator';
+import { useAuth } from '../../context/AuthContext';
 
 const districtsList = Object.keys(danangAdmin);
 
@@ -19,8 +21,10 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData,
     landStatus: 'Đang thuê'
   };
 
+  const { currentUser } = useAuth();
   const [formData, setFormData] = useState(defaultState);
   const [isLoading, setIsLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
 
   useEffect(() => {
     if (isOpen) {
@@ -62,6 +66,18 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData,
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setValidationErrors({});
+
+    // Validation
+    const { valid, errors } = validateDealer(formData);
+    if (!valid) {
+      setValidationErrors(errors);
+      // Hiển thị lỗi đầu tiên dưới dạng alert
+      const firstError = Object.values(errors)[0];
+      alert(`Lỗi nhập liệu: ${firstError}`);
+      return;
+    }
+
     setIsLoading(true);
     try {
       let lat = formData.resolvedLat || formData.lat;
@@ -85,7 +101,7 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData,
       if (editData?.owner && editData.owner !== formData.owner) {
         const startDateStr = editData.ownerStartDate || 'Không rõ';
         ownerHistory = [...ownerHistory, `${editData.owner}: ${startDateStr} - ${currentDateStr}`];
-        currentOwnerStartDate = currentDateStr; // Cập nhật ngày bắt đầu cho chủ mới
+        currentOwnerStartDate = currentDateStr;
       }
 
       const dealerBase = {
@@ -106,12 +122,12 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData,
       };
 
       if (editData && editData.id) {
-        // Mode: Edit - gửi thêm deleteField để xóa trường oldOwner cũ khỏi Firebase
-        await updateDealerInDB(editData.id, { ...dealerBase, oldOwner: deleteField() });
+        // Mode: Edit
+        await updateDealerInDB(editData.id, { ...dealerBase, oldOwner: deleteField(), updatedAt: new Date().toISOString() }, currentUser, editData);
         alert("Cập nhật đại lý thành công!");
       } else {
-        // Mode: Add - không có trường rác nào cả
-        await addDealerToDB(dealerBase);
+        // Mode: Add
+        await addDealerToDB({ ...dealerBase, createdAt: new Date().toISOString() }, currentUser);
         alert("Đã thêm đại lý thành công!");
       }
 

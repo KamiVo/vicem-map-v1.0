@@ -3,7 +3,7 @@ import { FaBars } from 'react-icons/fa';
 import Sidebar from './components/Sidebar/Sidebar';
 import MapViewer from './components/Map/MapViewer';
 import ManualAddModal from './components/Modals/ManualAddModal';
-import { fetchDealersFromDB, deleteDealerFromDB } from './services/firebase';
+import { fetchDealersFromDB, deleteDealerFromDB, auth } from './services/firebase';
 import DashboardModal from './components/Modals/DashboardModal';
 import DataManagementModal from './components/Modals/DataManagementModal';
 import LoginModal from './components/Modals/LoginModal';
@@ -82,7 +82,8 @@ const App = () => {
   const handleDeleteDealer = useCallback(async (id) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa đại lý này không?")) {
       try {
-        await deleteDealerFromDB(id);
+        const { currentUser } = auth ? { currentUser: auth.currentUser } : { currentUser: null };
+        await deleteDealerFromDB(id, currentUser);
         loadData();
       } catch (error) {
         console.error("Lỗi xóa đại lý:", error);

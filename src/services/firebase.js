@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, collection, getDocs, writeBatch, doc, getDoc, setDoc, updateDoc, deleteField, deleteDoc } from "firebase/firestore";
+import { getFirestore, collection, getDocs, writeBatch, doc, getDoc, setDoc, updateDoc, deleteField, deleteDoc, addDoc } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
 
@@ -43,14 +43,38 @@ if (isConfigValid) {
 
 export { db, auth, deleteField };
 
-// Hàm tải danh sách đại lý từ Firestore
+// ============================================================
+// AUDIT LOG — Ghi lại mọi thao tác CRUD (bất biến, không xóa/sửa được)
+// ============================================================
+
+const writeAuditLog = async (user, action, targetCollection, targetId, oldData = null, newData = null) => {
+  if (!db) return;
+  try {
+    await addDoc(collection(db, "audit_logs"), {
+      userId: user?.uid || 'unknown',
+      userEmail: user?.email || 'unknown',
+      action, // CREATE, UPDATE, DELETE
+      targetCollection,
+      targetId: targetId || 'N/A',
+      timestamp: new Date().toISOString(),
+      oldData,
+      newData
+    });
+  } catch (err) {
+    console.error("Lỗi ghi Audit Log:", err);
+  }
+};
+
+// Hàm tải danh sách đại lý từ Firestore (lọc bỏ dealer đã soft-delete)
 export const fetchDealersFromDB = async () => {
   if (!db) {
     throw new Error("Firebase chưa được cấu hình. Vui lòng kiểm tra file .env.");
   }
   const dealersCol = collection(db, "dealers");
   const dealerSnapshot = await getDocs(dealersCol);
-  return dealerSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  return dealerSnapshot.docs
+    .map(doc => ({ id: doc.id, ...doc.data() }))
+    .filter(dealer => !dealer.deleted); // Lọc bỏ dealer đã bị soft-delete
 };
 
 // Hàm nhập lô (batch insert) danh sách đại lý vào Firestore (Hỗ trợ > 500 bản ghi)
@@ -70,31 +94,39 @@ export const batchAddDealersToDB = async (dealers) => {
   }
 };
 
-// Hàm thêm 1 đại lý thủ công
-export const addDealerToDB = async (dealer) => {
+// Hàm thêm 1 đại lý thủ công (có Audit Log)
+export const addDealerToDB = async (dealer, user = null) => {
   if (!db) {
     throw new Error("Firebase chưa được cấu hình. Vui lòng kiểm tra file .env.");
   }
   const dealerRef = doc(collection(db, "dealers"));
   await setDoc(dealerRef, dealer);
+  await writeAuditLog(user, 'CREATE', 'dealers', dealerRef.id, null, dealer);
 };
 
-// Hàm cập nhật 1 đại lý
-export const updateDealerInDB = async (id, data) => {
+// Hàm cập nhật 1 đại lý (có Audit Log)
+export const updateDealerInDB = async (id, data, user = null, oldData = null) => {
   if (!db) {
     throw new Error("Firebase chưa được cấu hình. Vui lòng kiểm tra file .env.");
   }
   const dealerRef = doc(db, "dealers", id);
   await updateDoc(dealerRef, data);
+  await writeAuditLog(user, 'UPDATE', 'dealers', id, oldData, data);
 };
 
-// Hàm xóa 1 đại lý
-export const deleteDealerFromDB = async (id) => {
+// Hàm xóa 1 đại lý (SOFT DELETE — đánh dấu deleted, không xóa vật lý)
+export const deleteDealerFromDB = async (id, user = null) => {
   if (!db) {
     throw new Error("Firebase chưa được cấu hình. Vui lòng kiểm tra file .env.");
   }
   const dealerRef = doc(db, "dealers", id);
-  await deleteDoc(dealerRef);
+  const snapshot = await getDoc(dealerRef);
+  const oldData = snapshot.exists() ? snapshot.data() : null;
+  await updateDoc(dealerRef, {
+    deleted: true,
+    deletedAt: new Date().toISOString()
+  });
+  await writeAuditLog(user, 'DELETE', 'dealers', id, oldData, { deleted: true });
 };
 
 // Hàm xóa toàn bộ đại lý (Dùng cho Load Test)
