@@ -77,6 +77,21 @@ export const fetchDealersFromDB = async () => {
     .filter(dealer => !dealer.deleted); // Lọc bỏ dealer đã bị soft-delete
 };
 
+// Hàm tải 1 đại lý cụ thể theo ID
+export const fetchDealerById = async (id) => {
+  if (!db) {
+    throw new Error("Firebase chưa được cấu hình. Vui lòng kiểm tra file .env.");
+  }
+  const dealerRef = doc(db, "dealers", id);
+  const snapshot = await getDoc(dealerRef);
+  if (snapshot.exists()) {
+    const data = snapshot.data();
+    if (data.deleted) return null; // Không trả về đại lý đã bị xóa
+    return { id: snapshot.id, ...data };
+  }
+  return null;
+};
+
 // Hàm nhập lô (batch insert) danh sách đại lý vào Firestore (Hỗ trợ > 500 bản ghi)
 export const batchAddDealersToDB = async (dealers) => {
   if (!db) {

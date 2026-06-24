@@ -7,10 +7,23 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == 'Xq7aFcGB8YhkhNwJvQIZJIQSLE63';
     }
 
+    // Hàm kiểm tra cấu trúc dữ liệu Dealer hợp lệ
+    function isValidDealer() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['name', 'lat', 'lng', 'status', 'createdAt'])
+        && data.name is string
+        && data.name.size() >= 3
+        && data.lat is number
+        && data.lng is number
+        && data.status in ['Đại lý tốt', 'Chưa bán', 'Tháng này chưa lấy', 'Rủi ro', 'Trọng điểm', 'Không chào bán'];
+    }
+
     // Dealers collection
     match /dealers/{dealerId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow create: if isAdmin() && isValidDealer();
+      allow update: if isAdmin(); // Cho phép update linh hoạt (ví dụ: update deleted=true)
+      allow delete: if isAdmin();
 
       // Sub-collection: Sales
       match /sales/{yearId} {

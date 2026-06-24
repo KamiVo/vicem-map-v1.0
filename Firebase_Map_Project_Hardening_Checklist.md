@@ -15,25 +15,27 @@
 
 # Priority 1 - Critical Risks
 
-## 1. Firestore Security Rules
+## 1. Firestore Security Rules [✅ DONE]
 - Admin can create/update/delete.
 - Viewer can only read.
 - Anonymous access disabled.
 - Validate required fields in rules.
 
-## 2. Validation Layer
+## 2. Validation Layer [✅ DONE]
 Create `src/validators`.
 Validate dealer name, phone, status, coordinates, monthly sales.
 
-## 3. Audit Log
+## 3. Audit Log [✅ DONE]
 Create collection `audit_logs`.
 Store user, action, timestamp, oldData, newData.
+*(Lưu ý từ User: Không cần làm UI, chỉ cần lưu DB là đủ)*
 
-## 4. Soft Delete
+## 4. Soft Delete [✅ DONE]
 Use deleted=true instead of permanent deletion.
 
-## 5. Backup Strategy
+## 5. Backup Strategy [❌ SKIPPED]
 Daily export dealers, products, sales and users.
+*(User quyết định: chưa cần làm lúc này)*
 
 ---
 
@@ -81,26 +83,23 @@ Track login, create, update and delete actions.
 
 # Features That Impress Customers
 
-1. Excel Import
-2. Excel Export
-3. Powerful Search
-4. Fullscreen Presentation Mode
-5. Dashboard Statistics
-6. Activity Timeline
-7. Audit History
-8. Reliable Backup
-9. Fast Map Performance
-10. Stable Data Management
+1. Powerful Search [✅ DONE]
+2. Fullscreen Presentation Mode [✅ DONE]
+3. Dashboard Statistics [✅ DONE]
+4. Activity Timeline [❌ SKIPPED]
+5. Audit History [❌ SKIPPED]
+6. Reliable Backup [❌ SKIPPED]
+7. Fast Map Performance [✅ DONE]
+8. Stable Data Management [✅ DONE]
 
 ---
 
 # Final Priority Order
 
-1. Firestore Security Rules
-2. Backup Strategy
-3. Audit Log
-4. Validation Layer
-5. Excel Import/Export
-6. Dashboard
-7. Fullscreen Presentation Mode
-8. Monitoring
+1. ~~Firestore Security Rules~~ (Đã hoàn thành)
+2. ~~Backup Strategy~~ (Chưa cần làm)
+3. ~~Audit Log~~ (Đã hoàn thành)
+4. ~~Validation Layer~~ (Đã hoàn thành)
+5. ~~Dashboard~~ (Đã hoàn thành)
+6. ~~Fullscreen Presentation Mode~~ (Đã hoàn thành)
+7. Monitoring (Sentry/Crashlytics)

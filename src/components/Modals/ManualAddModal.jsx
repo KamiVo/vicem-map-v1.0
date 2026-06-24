@@ -4,6 +4,7 @@ import danangAdmin from '../../assets/danang_admin.json';
 import CustomSelect from '../UI/CustomSelect';
 import { validateDealer } from '../../validators/dealerValidator';
 import { useAuth } from '../../context/AuthContext';
+import { errorAlert, successAlert } from '../../utils/alerts';
 
 const districtsList = Object.keys(danangAdmin);
 
@@ -74,7 +75,7 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData,
       setValidationErrors(errors);
       // Hiển thị lỗi đầu tiên dưới dạng alert
       const firstError = Object.values(errors)[0];
-      alert(`Lỗi nhập liệu: ${firstError}`);
+      errorAlert("Lỗi nhập liệu", firstError);
       return;
     }
 
@@ -84,7 +85,7 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData,
       let lng = formData.resolvedLng || formData.lng;
 
       if (!lat || !lng) {
-        alert("Lỗi: Không xác định được tọa độ. Vui lòng thử lại.");
+        errorAlert("Lỗi tọa độ", "Không xác định được tọa độ. Vui lòng thử lại.");
         setIsLoading(false);
         return;
       }
@@ -124,18 +125,18 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData,
       if (editData && editData.id) {
         // Mode: Edit
         await updateDealerInDB(editData.id, { ...dealerBase, oldOwner: deleteField(), updatedAt: new Date().toISOString() }, currentUser, editData);
-        alert("Cập nhật đại lý thành công!");
+        successAlert("Thành công", "Cập nhật đại lý thành công!");
       } else {
         // Mode: Add
         await addDealerToDB({ ...dealerBase, createdAt: new Date().toISOString() }, currentUser);
-        alert("Đã thêm đại lý thành công!");
+        successAlert("Thành công", "Đã thêm đại lý thành công!");
       }
 
       onDataAdded(); // Yêu cầu map tải lại
       onClose(); // Đóng modal
     } catch (error) {
       console.error("Lỗi khi lưu đại lý:", error);
-      alert("Có lỗi xảy ra, vui lòng thử lại.");
+      errorAlert("Lỗi hệ thống", "Có lỗi xảy ra, vui lòng thử lại.");
     } finally {
       setIsLoading(false);
     }

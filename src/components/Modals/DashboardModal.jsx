@@ -1,58 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { FaTimes, FaSync, FaMapMarkerAlt, FaPhoneAlt, FaBoxOpen, FaSpinner, FaCog, FaEdit } from 'react-icons/fa';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { fetchSalesData, fetchProducts, fetchAllSalesYears } from '../../services/firebase';
+import { useDealerSalesYears, useDealerSales, useDealerProducts } from '../../hooks/useDealer';
 import CustomSelect from '../UI/CustomSelect';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
 const DashboardModal = ({ dealer, onClose, onOpenDataManager, onEditDealer, isAdmin }) => {
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
-  const [availableYears, setAvailableYears] = useState([CURRENT_YEAR]);
+  const { data: availableYears = [CURRENT_YEAR] } = useDealerSalesYears(dealer?.id);
+  
+  // Ensure selectedYear is valid when availableYears changes
+  if (availableYears.length > 0 && !availableYears.includes(selectedYear) && selectedYear !== CURRENT_YEAR) {
+    setSelectedYear(availableYears[0]);
+  }
 
-  const [salesData, setSalesData] = useState(null);
-  const [salesLoading, setSalesLoading] = useState(false);
-
-  const [products, setProducts] = useState([]);
-  const [productsLoading, setProductsLoading] = useState(false);
-
-  // Load available years
-  useEffect(() => {
-    if (!dealer?.id) return;
-    fetchAllSalesYears(dealer.id)
-      .then(yearsData => {
-        const years = yearsData.map(y => Number(y.year));
-        if (!years.includes(CURRENT_YEAR)) years.push(CURRENT_YEAR);
-        setAvailableYears(Array.from(new Set(years)).sort((a, b) => b - a));
-      })
-      .catch(console.error);
-  }, [dealer?.id]);
-
-  useEffect(() => {
-    if (!availableYears.includes(selectedYear)) {
-      setAvailableYears(prev => Array.from(new Set([...prev, selectedYear])).sort((a, b) => b - a));
-    }
-  }, [selectedYear, availableYears]);
-
-  // Load sales on year switch
-  useEffect(() => {
-    if (!dealer?.id) return;
-    setSalesLoading(true);
-    fetchSalesData(dealer.id, selectedYear)
-      .then(setSalesData)
-      .catch(console.error)
-      .finally(() => setSalesLoading(false));
-  }, [dealer?.id, selectedYear]);
-
-  // Load products once
-  useEffect(() => {
-    if (!dealer?.id) return;
-    setProductsLoading(true);
-    fetchProducts(dealer.id)
-      .then(setProducts)
-      .catch(console.error)
-      .finally(() => setProductsLoading(false));
-  }, [dealer?.id]);
+  const { data: salesData, isLoading: salesLoading } = useDealerSales(dealer?.id, selectedYear);
+  const { data: products = [], isLoading: productsLoading } = useDealerProducts(dealer?.id);
 
   if (!dealer) return null;
 

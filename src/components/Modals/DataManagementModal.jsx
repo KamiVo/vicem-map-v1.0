@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaTimes, FaSpinner, FaSave, FaTrash, FaPlus, FaChartBar, FaBoxOpen } from 'react-icons/fa';
 import { fetchSalesData, saveSalesData, fetchProducts, saveProduct, deleteProduct, fetchAllSalesYears } from '../../services/firebase';
 import CustomSelect from '../UI/CustomSelect';
+import { errorAlert, successAlert, confirmAlert } from '../../utils/alerts';
 
 const MONTHS = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
 const CURRENT_YEAR = new Date().getFullYear();
@@ -73,10 +74,10 @@ const DataManagementModal = ({ dealer, onClose }) => {
     setSalesSaving(true);
     try {
       await saveSalesData(dealer.id, selectedYear, months);
-      alert(`Đã lưu sản lượng năm ${selectedYear} thành công!`);
+      successAlert("Thành công", `Đã lưu sản lượng năm ${selectedYear} thành công!`);
     } catch (e) {
       console.error(e);
-      alert('Lỗi khi lưu sản lượng.');
+      errorAlert('Lỗi', 'Lỗi khi lưu sản lượng.');
     } finally {
       setSalesSaving(false);
     }
@@ -90,17 +91,18 @@ const DataManagementModal = ({ dealer, onClose }) => {
       setEditingProduct(null);
     } catch (e) {
       console.error(e);
-      alert('Lỗi khi lưu sản phẩm.');
+      errorAlert('Lỗi', 'Lỗi khi lưu sản phẩm.');
     }
   };
 
   const handleDeleteProduct = async (productId) => {
-    if (!window.confirm('Xóa sản phẩm này?')) return;
+    const isConfirmed = await confirmAlert("Xác nhận xóa", "Xóa sản phẩm này?");
+    if (!isConfirmed) return;
     try {
       await deleteProduct(dealer.id, productId);
       setProducts(prev => prev.filter(p => p.id !== productId));
     } catch (e) {
-      alert('Lỗi khi xóa sản phẩm.');
+      errorAlert('Lỗi', 'Lỗi khi xóa sản phẩm.');
     }
   };
 
@@ -286,7 +288,7 @@ const ProductForm = ({ product, onSave, onCancel }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!form.name.trim()) return alert('Vui lòng nhập tên hàng hóa.');
+    if (!form.name.trim()) return errorAlert('Lỗi', 'Vui lòng nhập tên hàng hóa.');
     onSave(form);
   };
 

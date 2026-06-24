@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { FaBars } from 'react-icons/fa';
-import Sidebar from './components/Sidebar/Sidebar';
-import MapViewer from './components/Map/MapViewer';
-import ManualAddModal from './components/Modals/ManualAddModal';
-import { fetchDealersFromDB, deleteDealerFromDB, auth } from './services/firebase';
-import DashboardModal from './components/Modals/DashboardModal';
-import DataManagementModal from './components/Modals/DataManagementModal';
-import LoginModal from './components/Modals/LoginModal';
-import { useAuth } from './context/AuthContext';
+import Sidebar from '../components/Sidebar/Sidebar';
+import MapViewer from '../components/Map/MapViewer';
+import ManualAddModal from '../components/Modals/ManualAddModal';
+import { fetchDealersFromDB, deleteDealerFromDB, auth } from '../services/firebase';
+import DashboardModal from '../components/Modals/DashboardModal';
+import DataManagementModal from '../components/Modals/DataManagementModal';
+import LoginModal from '../components/Modals/LoginModal';
+import { useAuth } from '../context/AuthContext';
+import { errorAlert, confirmAlert, successAlert } from '../utils/alerts';
 
-const App = () => {
+const MapPage = () => {
   const { isAdmin } = useAuth();
   
   // Master state
@@ -192,20 +193,18 @@ const App = () => {
           isAdmin={isAdmin}
         />
       )}
-
       {dataManagerDealer && (
-        <DataManagementModal
+        <DataManagementModal 
           dealer={dataManagerDealer}
           onClose={() => setDataManagerDealer(null)}
         />
       )}
-
       <LoginModal 
-        isOpen={isLoginModalOpen} 
-        onClose={() => setIsLoginModalOpen(false)} 
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
       />
     </div>
   );
 };
 
-export default App;
+export default MapPage; 
