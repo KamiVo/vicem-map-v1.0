@@ -39,6 +39,7 @@ const ResetViewControl = ({ center, zoom }) => {
 // Map Events
 const MapEvents = ({ onAddDealerByClick, selectedLocation, setZoomLevel, isAdmin, onClearSelection }) => {
   const map = useMap();
+  const isClosingProgrammatically = useRef(false);
   
   useMapEvents({
     contextmenu(e) {
@@ -50,14 +51,20 @@ const MapEvents = ({ onAddDealerByClick, selectedLocation, setZoomLevel, isAdmin
       setZoomLevel(map.getZoom());
     },
     popupclose() {
-      // Khi user đóng popup (bấm X hoặc click ra ngoài), xóa trạng thái selected
+      // Chỉ xóa selection khi USER đóng popup (bấm X hoặc click ra ngoài)
+      // Bỏ qua khi đóng bằng code (map.closePopup()) để tránh race condition
+      if (isClosingProgrammatically.current) {
+        isClosingProgrammatically.current = false;
+        return;
+      }
       if (onClearSelection) onClearSelection();
     }
   });
 
   useEffect(() => {
     if (selectedLocation && selectedLocation.lat && selectedLocation.lng) {
-      // Đóng popup cũ trước khi bay đến vị trí mới
+      // Đánh dấu đang đóng popup bằng code để popupclose handler không xóa selection
+      isClosingProgrammatically.current = true;
       map.closePopup();
       // Tính toán tọa độ bù trừ để marker nằm lệch xuống dưới 1 chút (tránh banner ở trên cùng)
       const targetZoom = 18;
