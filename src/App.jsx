@@ -136,7 +136,7 @@ const App = () => {
       {/* Map is absolutely positioned to take the whole screen */}
       <div className="absolute inset-0 z-0">
         {/* Lời chào trên màn chiếu (HUD Glass Ribbon) */}
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1500] pointer-events-none w-full px-6 flex justify-center">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[400] pointer-events-none w-full px-6 flex justify-center">
           <div className="relative group">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full blur-md opacity-30 group-hover:opacity-60 transition duration-500"></div>
             <h1 className="relative text-[10px] sm:text-xs md:text-base lg:text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-rose-400 uppercase tracking-[0.2em] bg-white/70 backdrop-blur-xl px-10 py-3 rounded-full border border-white/60 shadow-[0_8px_32px_rgba(225,29,72,0.15)] flex items-center gap-3">
