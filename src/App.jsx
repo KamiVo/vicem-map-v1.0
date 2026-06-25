@@ -3,7 +3,7 @@ import { FaBars } from 'react-icons/fa';
 import Sidebar from './components/Sidebar/Sidebar';
 import MapViewer from './components/Map/MapViewer';
 import ManualAddModal from './components/Modals/ManualAddModal';
-import { fetchDealersFromDB, deleteDealerFromDB, auth } from './services/firebase';
+import { fetchDealersFromDB, subscribeToDealers, deleteDealerFromDB, auth } from './services/firebase';
 import DashboardModal from './components/Modals/DashboardModal';
 import DataManagementModal from './components/Modals/DataManagementModal';
 import LoginModal from './components/Modals/LoginModal';
@@ -43,18 +43,21 @@ const App = () => {
   };
 
   const loadData = useCallback(async () => {
-    try {
-      const data = await fetchDealersFromDB();
-      setDealers(data);
-    } catch (error) {
-      console.error("Lỗi tải Database Firebase:", error);
-      errorAlert("Lỗi Kết Nối", "Không thể kết nối đến dữ liệu Firebase. Vui lòng kiểm tra kết nối mạng hoặc cấu hình máy chủ.");
-      setDealers([]);
-    }
+    // Giữ lại hàm rỗng để các Component khác gọi loadData không bị crash
   }, []);
 
   useEffect(() => {
-    loadData();
+    const unsubscribe = subscribeToDealers(
+      (data) => {
+        setDealers(data);
+      },
+      (error) => {
+        errorAlert("Lỗi Kết Nối", "Không thể lắng nghe dữ liệu Firebase. Vui lòng kiểm tra cấu hình.");
+        setDealers([]);
+      }
+    );
+    // Cleanup listener when unmounting
+    return () => unsubscribe();
   }, []);
 
   // Tối ưu hóa thuật toán lọc bằng O(N) single-pass với useMemo thay vì useEffect gây double-render

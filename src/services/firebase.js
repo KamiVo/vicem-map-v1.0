@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, collection, getDocs, writeBatch, doc, getDoc, setDoc, updateDoc, deleteField, deleteDoc, addDoc } from "firebase/firestore";
+import { getFirestore, enableIndexedDbPersistence, collection, getDocs, writeBatch, doc, getDoc, setDoc, updateDoc, deleteField, deleteDoc, addDoc } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
 
@@ -26,6 +26,16 @@ if (isConfigValid) {
   try {
     app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     db = getFirestore(app);
+    
+    // Kích hoạt Offline Persistence (Bộ nhớ đệm cục bộ)
+    enableIndexedDbPersistence(db).catch((err) => {
+      if (err.code === 'failed-precondition') {
+        console.warn('Multiple tabs open, persistence can only be enabled in one tab at a a time.');
+      } else if (err.code === 'unimplemented') {
+        console.warn('The current browser does not support all of the features required to enable persistence');
+      }
+    });
+
     auth = getAuth(app);
     // Chỉ khởi tạo Analytics khi có measurementId và chạy trên client
     if (typeof window !== "undefined" && firebaseConfig.measurementId) {
@@ -75,6 +85,27 @@ export const fetchDealersFromDB = async () => {
   return dealerSnapshot.docs
     .map(doc => ({ id: doc.id, ...doc.data() }))
     .filter(dealer => !dealer.deleted); // Lọc bỏ dealer đã bị soft-delete
+};
+
+import { onSnapshot } from "firebase/firestore";
+
+// Hàm lắng nghe danh sách đại lý theo thời gian thực
+export const subscribeToDealers = (callback, onError) => {
+  if (!db) {
+    if (onError) onError(new Error("Firebase chưa được cấu hình."));
+    return () => {};
+  }
+  const dealersCol = collection(db, "dealers");
+  const unsubscribe = onSnapshot(dealersCol, (snapshot) => {
+    const data = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter(dealer => !dealer.deleted);
+    callback(data);
+  }, (error) => {
+    console.error("Lỗi lắng nghe Firestore realtime:", error);
+    if (onError) onError(error);
+  });
+  return unsubscribe;
 };
 
 // Hàm tải 1 đại lý cụ thể theo ID
