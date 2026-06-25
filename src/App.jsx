@@ -199,7 +199,10 @@ const App = () => {
       {dataManagerDealer && (
         <DataManagementModal
           dealer={dataManagerDealer}
-          onClose={() => setDataManagerDealer(null)}
+          onClose={() => {
+            setDashboardDealer(dataManagerDealer); // Quay lại Dashboard
+            setDataManagerDealer(null);
+          }}
         />
       )}
 
