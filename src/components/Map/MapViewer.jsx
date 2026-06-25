@@ -54,7 +54,7 @@ const MapEvents = ({ onAddDealerByClick, selectedLocation, setZoomLevel, isAdmin
   useEffect(() => {
     if (selectedLocation && selectedLocation.lat && selectedLocation.lng) {
       // Tính toán tọa độ bù trừ để marker nằm lệch xuống dưới 1 chút (tránh banner ở trên cùng)
-      const targetZoom = 16;
+      const targetZoom = 18; // Tăng zoom level lên 18 để nhìn rõ đường phố và tách biệt các marker gần nhau
       const targetPoint = map.project([selectedLocation.lat, selectedLocation.lng], targetZoom);
       targetPoint.y -= 150; // Trừ đi 150 pixel để dời tâm bản đồ lên trên, marker sẽ nằm xuống dưới
       const targetLatLng = map.unproject(targetPoint, targetZoom);
@@ -340,6 +340,7 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, onEditDe
           maxClusterRadius={50}
           spiderfyOnMaxZoom={true}
           showCoverageOnHover={false}
+          disableClusteringAtZoom={18} // Tắt gom cụm ở mức zoom 18+ để hiển thị rõ các cửa hàng sát nhau
         >
           {markersToRender.map((dealer) => {
             if (!dealer.lat || !dealer.lng) return null;
