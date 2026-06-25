@@ -53,7 +53,12 @@ const MapEvents = ({ onAddDealerByClick, selectedLocation, setZoomLevel, isAdmin
 
   useEffect(() => {
     if (selectedLocation && selectedLocation.lat && selectedLocation.lng) {
-      map.flyTo([selectedLocation.lat, selectedLocation.lng], 16, { animate: true, duration: 1.5 });
+      // Tính toán tọa độ bù trừ để marker nằm lệch xuống dưới 1 chút (tránh banner ở trên cùng)
+      const targetZoom = 16;
+      const targetPoint = map.project([selectedLocation.lat, selectedLocation.lng], targetZoom);
+      targetPoint.y -= 150; // Trừ đi 150 pixel để dời tâm bản đồ lên trên, marker sẽ nằm xuống dưới
+      const targetLatLng = map.unproject(targetPoint, targetZoom);
+      map.flyTo(targetLatLng, targetZoom, { animate: true, duration: 1.5 });
     }
   }, [selectedLocation, map]);
 
@@ -340,7 +345,7 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, onEditDe
                   {dealer.name}
                 </Tooltip>
               )}
-              <Popup offset={[0, -20]} className="custom-popup">
+              <Popup offset={[0, -20]} className="custom-popup" autoPanPaddingTopLeft={[0, 120]}>
                 <div className="p-2 min-w-[260px]">
                   <h3 className="font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-cyan-500 text-sm mb-3 leading-tight drop-shadow-sm">{dealer.status === 'Đặc biệt' && '⭐ '}{dealer.name}</h3>
                   <div className="text-xs md:text-sm text-gray-600 mb-4 space-y-2 font-medium">
