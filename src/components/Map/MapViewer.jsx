@@ -65,9 +65,9 @@ const GeoJSONFocus = ({ geoData, filters }) => {
   const map = useMap();
   
   useEffect(() => {
-    if (!geoData || (!filters?.district && !filters?.ward)) return;
+    if (!geoData || !filters?.ward) return;
     
-    const targetWards = filters.ward ? [filters.ward] : (danangAdmin[filters.district] || []);
+    const targetWards = [filters.ward];
     if (targetWards.length === 0) return;
 
     const highlightedFeatures = geoData.features.filter(f => {
@@ -87,7 +87,7 @@ const GeoJSONFocus = ({ geoData, filters }) => {
         console.error("Lỗi khi focus GeoJSON", err);
       }
     }
-  }, [filters?.district, filters?.ward, geoData, map]);
+  }, [filters?.ward, geoData, map]);
   
   return null;
 };
@@ -103,8 +103,14 @@ const getDealerIcon = (status, isSelected) => {
   }
 
   let colorClass, bgClass, borderClass;
+  let isSpecial = false;
 
-  if (status === 'Đại lý tốt') {
+  if (status === 'Đặc biệt') {
+    colorClass = 'text-yellow-700';
+    bgClass = 'bg-gradient-to-br from-yellow-200 to-amber-300';
+    borderClass = 'border-yellow-500';
+    isSpecial = true;
+  } else if (status === 'Đại lý tốt') {
     colorClass = 'text-emerald-600';
     bgClass = 'bg-emerald-100';
     borderClass = 'border-emerald-500';
@@ -122,22 +128,31 @@ const getDealerIcon = (status, isSelected) => {
     borderClass = 'border-slate-800';
   }
 
-  const sizeClass = isSelected ? 'w-10 h-10 border-[3px] shadow-2xl scale-110' : 'w-8 h-8 border-[2.5px] shadow-lg';
+  const baseSize = isSpecial ? (isSelected ? 'w-12 h-12' : 'w-9 h-9') : (isSelected ? 'w-10 h-10' : 'w-8 h-8');
+  const borderWidth = isSelected ? 'border-[3px]' : 'border-[2.5px]';
+  const shadow = isSelected ? 'shadow-2xl scale-110' : 'shadow-lg';
+  const sizeClass = `${baseSize} ${borderWidth} ${shadow}`;
+
+  const pulseHtml = (isSelected || isSpecial) 
+    ? `<span class="absolute -top-1 -right-1 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full ${isSpecial ? 'bg-yellow-400' : 'bg-blue-400'} opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 ${isSpecial ? 'bg-yellow-500' : 'bg-blue-500'}"></span></span>`
+    : '';
 
   const iconHtml = `
     <div class="relative flex items-center justify-center ${sizeClass} rounded-full ${bgClass} ${borderClass} transform transition-all duration-300 hover:scale-125 z-10">
       <svg class="w-[55%] h-[55%] ${colorClass}" fill="currentColor" viewBox="0 0 24 24">
         <path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/>
       </svg>
-      ${isSelected ? `<span class="absolute -top-1 -right-1 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span></span>` : ''}
+      ${pulseHtml}
     </div>
   `;
+
+  const iconSizePx = isSpecial ? (isSelected ? 48 : 36) : (isSelected ? 40 : 32);
 
   const icon = L.divIcon({
     html: iconHtml,
     className: 'bg-transparent border-none',
-    iconSize: isSelected ? [40, 40] : [32, 32],
-    iconAnchor: isSelected ? [20, 40] : [16, 32]
+    iconSize: [iconSizePx, iconSizePx],
+    iconAnchor: [iconSizePx / 2, iconSizePx]
   });
 
   iconCache.set(cacheKey, icon);
@@ -172,7 +187,7 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, onEditDe
   useEffect(() => {
     if (showGeoJSON && !geoData) {
       // Gọi file ranh giới từ thư mục public/
-      fetch('/danang.geojson')
+      fetch('/danang_v1_0.geojson')
         .then(response => response.json())
         .then(data => setGeoData(data))
         .catch(err => console.error("Lỗi tải GeoJSON", err));
@@ -184,7 +199,7 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, onEditDe
     let isHighlighted = false;
     
     if (filters && name) {
-      const targetWards = filters.ward ? [filters.ward] : (danangAdmin[filters.district] || []);
+      const targetWards = filters.ward ? [filters.ward] : [];
       if (targetWards.length > 0) {
         isHighlighted = targetWards.some(w => name.includes(w));
       }
@@ -327,13 +342,14 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, onEditDe
               )}
               <Popup offset={[0, -20]} className="custom-popup">
                 <div className="p-2 min-w-[260px]">
-                  <h3 className="font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-cyan-500 text-sm mb-3 leading-tight drop-shadow-sm">{dealer.name}</h3>
+                  <h3 className="font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-cyan-500 text-sm mb-3 leading-tight drop-shadow-sm">{dealer.status === 'Đặc biệt' && '⭐ '}{dealer.name}</h3>
                   <div className="text-xs md:text-sm text-gray-600 mb-4 space-y-2 font-medium">
                     <p className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span> <span className="font-bold text-gray-800">Chủ:</span> {dealer.owner || 'Chưa cập nhật'}</p>
                     <p className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span> <span className="font-bold text-gray-800">Số điện thoại:</span> {dealer.phone || 'Chưa cập nhật'}</p>
                     <p className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span> <span className="font-bold text-gray-800">Năm thành lập:</span> {dealer.establishedYear || 'Chưa cập nhật'} {dealer.founder ? `(${dealer.founder})` : ''}</p>
                     <p className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span> <span className="font-bold text-gray-800">Tình trạng đất:</span> {dealer.landStatus || 'Đang thuê'}</p>
-                    <p className="flex items-start gap-2"><span className="w-1.5 h-1.5 bg-blue-400 rounded-full mt-1.5 shrink-0"></span> <span className="font-bold text-gray-800 shrink-0">Địa chỉ:</span> <span className="line-clamp-2">{dealer.address}{dealer.ward ? `, ${dealer.ward}` : ''}, Quận {dealer.district}</span></p>
+                    <p className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span> <span className="font-bold text-gray-800">Nguồn vốn:</span> {dealer.fundingSource || 'Chưa cập nhật'}</p>
+                    <p className="flex items-start gap-2"><span className="w-1.5 h-1.5 bg-blue-400 rounded-full mt-1.5 shrink-0"></span> <span className="font-bold text-gray-800 shrink-0">Địa chỉ:</span> <span className="line-clamp-2">{dealer.address}{dealer.ward ? `, Phường ${dealer.ward}` : ''}</span></p>
                   </div>
                   <div className="flex gap-2">
                     <button 

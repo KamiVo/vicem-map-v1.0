@@ -88,7 +88,7 @@ const DashboardModal = ({ dealer, onClose, onOpenDataManager, onEditDealer, isAd
                 <div className="space-y-3 text-sm text-gray-700 font-medium">
                   <p className="flex items-start gap-3">
                     <FaMapMarkerAlt className="mt-1 text-blue-500 shrink-0 text-lg" />
-                    <span className="leading-relaxed">{dealer.address}{dealer.ward ? `, ${dealer.ward}` : ''}, Quận {dealer.district}, Đà Nẵng</span>
+                    <span className="leading-relaxed">{dealer.address}{dealer.ward ? `, Phường ${dealer.ward}` : ''}, Đà Nẵng</span>
                   </p>
                   <p className="flex items-center gap-3">
                     <FaPhoneAlt className="text-blue-500 shrink-0 text-lg" />
@@ -115,11 +115,19 @@ const DashboardModal = ({ dealer, onClose, onOpenDataManager, onEditDealer, isAd
                     <p className="text-sm text-gray-600 mt-1">Đại diện pháp luật</p>
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t border-gray-50 flex justify-between items-center">
-                  <span className="text-sm text-gray-500">Tình trạng đất:</span>
-                  <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg text-sm font-bold border border-blue-100">
-                    {dealer.landStatus || 'Đang thuê'}
-                  </span>
+                <div className="mt-4 pt-4 border-t border-gray-50 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">Tình trạng đất:</span>
+                    <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg text-sm font-bold border border-blue-100">
+                      {dealer.landStatus || 'Đang thuê'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">Nguồn vốn:</span>
+                    <span className="px-3 py-1 bg-purple-50 text-purple-700 rounded-lg text-sm font-bold border border-purple-100">
+                      {dealer.fundingSource || 'Chưa cập nhật'}
+                    </span>
+                  </div>
                 </div>
                 {dealer.ownerHistory && dealer.ownerHistory.length > 0 && (
                   <div className="mt-3 p-3 bg-yellow-50 text-yellow-800 border border-yellow-200 rounded-lg text-xs max-h-28 overflow-y-auto">

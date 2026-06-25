@@ -34,19 +34,46 @@ const SearchBar = ({ dealers, onSelectLocation }) => {
         return { ...d, type: 'dealer', matchField };
       });
 
-      // 2. Tìm qua ArcGIS Geocoding API (Chính xác hơn với số nhà ở Việt Nam)
+      // 2. Tìm qua ArcGIS Geocoding API (Giới hạn khu vực Đà Nẵng)
       try {
         const searchQuery = query.toLowerCase().includes('đà nẵng') ? query : query + ' Đà Nẵng';
-        const res = await fetch(`https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?f=json&singleLine=${encodeURIComponent(searchQuery)}&outFields=Match_addr,Addr_type&maxLocations=5`);
+        const searchExtent = "107.8,15.9,108.3,16.3"; // Bounding box Đà Nẵng
+        const res = await fetch(`https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?f=json&singleLine=${encodeURIComponent(searchQuery)}&outFields=Match_addr,Addr_type&maxLocations=5&searchExtent=${searchExtent}`);
         const apiData = await res.json();
         
-        // Loại bỏ kết quả trùng lặp bằng Set
         const uniqueMatches = [];
         const seen = new Set();
 
+        const oldToNewWards = {
+          "Thanh Bình": "Hải Châu", "Thuận Phước": "Hải Châu", "Thạch Thang": "Hải Châu", "Phước Ninh": "Hải Châu", "Hải Châu 1": "Hải Châu", "Hải Châu 2": "Hải Châu", "Hải Châu I": "Hải Châu", "Hải Châu II": "Hải Châu",
+          "Bình Thuận": "Hòa Cường", "Hòa Thuận Tây": "Hòa Cường", "Hòa Thuận Đông": "Hòa Cường", "Hòa Cường Bắc": "Hòa Cường", "Hòa Cường Nam": "Hòa Cường",
+          "Tam Thuận": "Thanh Khê", "Xuân Hà": "Thanh Khê", "Chính Gián": "Thanh Khê", "Thạc Gián": "Thanh Khê", "Vĩnh Trung": "Thanh Khê", "Tân Chính": "Thanh Khê", "Thanh Khê Đông": "Thanh Khê", "Thanh Khê Tây": "Thanh Khê",
+          "Hòa An": "An Khê", "Hòa Phát": "An Khê",
+          "Phước Mỹ": "An Hải", "An Hải Bắc": "An Hải", "An Hải Tây": "An Hải", "An Hải Nam": "An Hải",
+          "Thọ Quang": "Sơn Trà", "Nại Hiên Đông": "Sơn Trà", "Mân Thái": "Sơn Trà",
+          "Mỹ An": "Ngũ Hành Sơn", "Khuê Mỹ": "Ngũ Hành Sơn", "Hòa Hải": "Ngũ Hành Sơn", "Hòa Quý": "Ngũ Hành Sơn",
+          "Hòa Minh": "Hòa Khánh", "Hòa Khánh Nam": "Hòa Khánh", "Hòa Khánh Bắc": "Hòa Khánh",
+          "Hòa Hiệp Nam": "Hải Vân", "Hòa Hiệp Bắc": "Hải Vân",
+          "Khuê Trung": "Cẩm Lệ", "Hòa Thọ Đông": "Cẩm Lệ", "Hòa Thọ Tây": "Cẩm Lệ"
+        };
+
         if (apiData.candidates) {
           apiData.candidates.forEach(item => {
-            const addressStr = item.address;
+            let addressStr = item.address;
+
+            // Xóa thông tin Quận
+            addressStr = addressStr.replace(/Quận [^,]+,/gi, "");
+            addressStr = addressStr.replace(/District [^,]+,/gi, "");
+
+            // Cập nhật tên Phường cũ thành mới
+            Object.keys(oldToNewWards).forEach(old => {
+              const reg = new RegExp(`Phường ${old}(?=[,\\s]|$)`, "gi");
+              addressStr = addressStr.replace(reg, `Phường ${oldToNewWards[old]}`);
+            });
+
+            // Clean up dấu phẩy thừa
+            addressStr = addressStr.replace(/,\s*,/g, ",").replace(/\s+/g, " ").trim();
+
             if (!seen.has(addressStr)) {
               seen.add(addressStr);
               uniqueMatches.push({

@@ -1,15 +1,10 @@
 import fs from 'fs';
 
-const geojson = JSON.parse(fs.readFileSync('./public/danang.geojson', 'utf-8'));
+const geojson = JSON.parse(fs.readFileSync('./public/danang_v1_0.geojson', 'utf-8'));
 const danangAdmin = JSON.parse(fs.readFileSync('./src/assets/danang_admin.json', 'utf-8'));
 
-// Flatten all wards with their districts
-const wardToDistrict = {};
-for (const [district, wards] of Object.entries(danangAdmin)) {
-  for (const ward of wards) {
-    wardToDistrict[ward.toLowerCase()] = { district, ward };
-  }
-}
+// Flatten all valid wards
+const validWards = new Set(danangAdmin.map(w => w.toLowerCase()));
 
 const getPolygonCentroid = (coordinates) => {
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
@@ -57,10 +52,11 @@ for (const feature of geojson.features) {
   }
 
   if (name && (props.admin_level === "8" || name.includes("Phường") || name.includes("Xã"))) {
-    const cleanName = name.replace(/(Phường|Xã)\s+/i, '').trim().toLowerCase();
+    const cleanName = name.replace(/(Phường|Xã)\s+/i, '').trim();
+    const cleanNameLower = cleanName.toLowerCase();
     
-    if (wardToDistrict[cleanName]) {
-      const { district, ward } = wardToDistrict[cleanName];
+    if (validWards.has(cleanNameLower)) {
+      const ward = danangAdmin.find(w => w.toLowerCase() === cleanNameLower);
       
       // Compute centroid
       if (feature.geometry) {
@@ -74,10 +70,9 @@ for (const feature of geojson.features) {
            lng = center.lng;
          }
          
-         if (!centroids[district]) centroids[district] = {};
          // Only set if not already set, or prefer Polygon over Point
-         if (!centroids[district][ward] || feature.geometry.type !== 'Point') {
-           centroids[district][ward] = { lat, lng };
+         if (!centroids[ward] || feature.geometry.type !== 'Point') {
+           centroids[ward] = { lat, lng };
            matched++;
          }
       }

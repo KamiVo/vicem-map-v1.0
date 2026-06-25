@@ -4,7 +4,7 @@ service cloud.firestore {
 
     // Chỉ Admin UID cụ thể mới được write
     function isAdmin() {
-      return request.auth != null && request.auth.uid == 'Xq7aFcGB8YhkhNwJvQIZJIQSLE63';
+      return request.auth != null && request.auth.uid == 'nC9f8W8ktNYEDv1XOMSStSxgGpt1';
     }
 
     // Hàm kiểm tra cấu trúc dữ liệu Dealer hợp lệ
@@ -15,7 +15,7 @@ service cloud.firestore {
         && data.name.size() >= 3
         && data.lat is number
         && data.lng is number
-        && data.status in ['Đại lý tốt', 'Chưa bán', 'Tháng này chưa lấy', 'Rủi ro', 'Trọng điểm', 'Không chào bán'];
+        && data.status in ['Đại lý tốt', 'Chưa bán', 'Tháng này chưa lấy', 'Rủi ro', 'Trọng điểm', 'Không chào bán', 'Đặc biệt'];
     }
 
     // Dealers collection

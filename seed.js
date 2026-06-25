@@ -1,32 +1,22 @@
-const PROJECT_ID = "webcement-f5861";
+const PROJECT_ID = "webcemet-v1-0";
 
-// Random data generators
-const districts = [
-  "Hải Châu", "Thanh Khê", "Sơn Trà", "Ngũ Hành Sơn", 
-  "Liên Chiểu", "Cẩm Lệ", "Hòa Vang"
+const wards = [
+  "Hải Châu", "Hòa Cường", "Thanh Khê", "An Khê", "An Hải", 
+  "Sơn Trà", "Ngũ Hành Sơn", "Hòa Khánh", "Hải Vân", 
+  "Liên Chiểu", "Cẩm Lệ", "Hòa Xuân", "Hòa Tiến", "Hòa Vang"
 ];
 
-const wards = {
-  "Hải Châu": ["Hải Châu 1", "Hải Châu 2", "Thạch Thang", "Thuận Phước", "Hòa Thuận Tây"],
-  "Thanh Khê": ["Vĩnh Trung", "Tân Chính", "Thạc Gián", "Chính Gián", "Tam Thuận"],
-  "Sơn Trà": ["An Hải Tây", "An Hải Bắc", "Phước Mỹ", "Thọ Quang", "Nại Hiên Đông"],
-  "Ngũ Hành Sơn": ["Mỹ An", "Khuê Mỹ", "Hòa Hải", "Hòa Quý"],
-  "Liên Chiểu": ["Hòa Minh", "Hòa Khánh Nam", "Hòa Khánh Bắc", "Hòa Hiệp Nam"],
-  "Cẩm Lệ": ["Khuê Trung", "Hòa Thọ Đông", "Hòa Thọ Tây", "Hòa Phát"],
-  "Hòa Vang": ["Hòa Phong", "Hòa Châu", "Hòa Tiến", "Hòa Nhơn"]
-};
-
-const statuses = ['Đại lý tốt', 'Đại lý chưa bán', 'Đại lý rủi ro', 'Không chào bán'];
+const statuses = ['Đại lý tốt', 'Chưa bán', 'Tháng này chưa lấy', 'Rủi ro', 'Trọng điểm', 'Không chào bán', 'Đặc biệt'];
+const fundingSources = ['Nguồn riêng', 'Nguồn chung'];
 
 function randomLat() { return 15.95 + Math.random() * 0.15; }
 function randomLng() { return 108.10 + Math.random() * 0.15; }
 
 const dealers = [];
 for (let i = 1; i <= 50; i++) {
-  const district = districts[Math.floor(Math.random() * districts.length)];
-  const wardList = wards[district];
-  const ward = wardList[Math.floor(Math.random() * wardList.length)];
+  const ward = wards[Math.floor(Math.random() * wards.length)];
   const status = statuses[Math.floor(Math.random() * statuses.length)];
+  const fundingSource = fundingSources[Math.floor(Math.random() * fundingSources.length)];
 
   const chartData = [];
   let totalSales = 0;
@@ -45,7 +35,6 @@ for (let i = 1; i <= 50; i++) {
   dealers.push({
     name: `Đại lý VLXD ${Math.random().toString(36).substring(2, 6).toUpperCase()} - Cửa hàng ${i}`,
     address: `${Math.floor(Math.random() * 200) + 1} Đường Nguyễn Văn Linh`,
-    district: district,
     ward: ward,
     lat: randomLat(),
     lng: randomLng(),
@@ -55,6 +44,7 @@ for (let i = 1; i <= 50; i++) {
     founder: `Người sáng lập ${i}`,
     landStatus: Math.random() > 0.5 ? "Sở hữu" : "Đang thuê",
     status: status,
+    fundingSource: fundingSource,
     chartData: chartData,
     products: products,
     createdAt: new Date().toISOString()

@@ -6,16 +6,15 @@ import { validateDealer } from '../../validators/dealerValidator';
 import { useAuth } from '../../context/AuthContext';
 import { errorAlert, successAlert } from '../../utils/alerts';
 
-const districtsList = Object.keys(danangAdmin);
 
 const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData, onDeleteDealer }) => {
   const defaultState = {
     name: '',
     address: '',
-    district: 'Hải Châu',
-    ward: danangAdmin['Hải Châu'][0],
+    ward: danangAdmin[0],
     phone: '',
     status: 'Đại lý tốt',
+    fundingSource: 'Nguồn riêng',
     owner: '',
     founder: '',
     establishedYear: '',
@@ -37,7 +36,6 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData,
           lat: initialCoords.lat,
           lng: initialCoords.lng,
           address: initialCoords.address || '',
-          district: defaultState.district,
           ward: defaultState.ward,
           resolvedLat: initialCoords.lat,
           resolvedLng: initialCoords.lng
@@ -52,13 +50,7 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData,
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'district') {
-      setFormData(prev => ({
-        ...prev,
-        district: value,
-        ward: danangAdmin[value][0] // Reset ward when district changes
-      }));
-    } else if (name === 'address') {
+    if (name === 'address') {
       setFormData(prev => ({ ...prev, address: value }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
@@ -108,10 +100,10 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData,
       const dealerBase = {
         name: formData.name,
         address: formData.address,
-        district: formData.district,
         ward: formData.ward,
         phone: formData.phone,
         status: formData.status,
+        fundingSource: formData.fundingSource || 'Nguồn riêng',
         lat,
         lng,
         owner: formData.owner || '',
@@ -219,16 +211,7 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData,
               />
             </div>
 
-            <div>
-              <label className="block text-xs md:text-sm font-black text-blue-900/60 mb-1.5 uppercase tracking-wide">Quận/Huyện *</label>
-              <CustomSelect 
-                name="district" 
-                value={formData.district} 
-                onChange={handleChange} 
-                placeholder="Chọn Quận/Huyện"
-                options={districtsList.map(dist => ({ label: dist, value: dist }))}
-              />
-            </div>
+
 
             <div>
               <label className="block text-xs md:text-sm font-black text-blue-900/60 mb-1.5 uppercase tracking-wide">Phường/Xã *</label>
@@ -237,8 +220,21 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData,
                 value={formData.ward} 
                 onChange={handleChange} 
                 placeholder="Chọn Phường/Xã"
-                disabled={!formData.district}
-                options={danangAdmin[formData.district] ? danangAdmin[formData.district].map(w => ({ label: w, value: w })) : []}
+                options={danangAdmin.map(w => ({ label: w, value: w }))}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs md:text-sm font-black text-blue-900/60 mb-1.5 uppercase tracking-wide">Nguồn vốn</label>
+              <CustomSelect 
+                name="fundingSource" 
+                value={formData.fundingSource} 
+                onChange={handleChange} 
+                placeholder="Chọn Nguồn vốn"
+                options={[
+                  { label: 'Nguồn riêng', value: 'Nguồn riêng' },
+                  { label: 'Nguồn chung', value: 'Nguồn chung' }
+                ]}
               />
             </div>
           </div>

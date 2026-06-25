@@ -8,6 +8,7 @@ import DashboardModal from './components/Modals/DashboardModal';
 import DataManagementModal from './components/Modals/DataManagementModal';
 import LoginModal from './components/Modals/LoginModal';
 import { useAuth } from './context/AuthContext';
+import { errorAlert } from './utils/alerts';
 
 const App = () => {
   const { isAdmin } = useAuth();
@@ -18,7 +19,6 @@ const App = () => {
   // UI State
   const [showGeoJSON, setShowGeoJSON] = useState(true);
   const [filters, setFilters] = useState({
-    district: '',
     ward: '',
     status: 'Tất cả'
   });
@@ -60,7 +60,7 @@ const App = () => {
   // Tối ưu hóa thuật toán lọc bằng O(N) single-pass với useMemo thay vì useEffect gây double-render
   const filteredDealers = useMemo(() => {
     return dealers.filter(d => {
-      if (filters.district && d.district !== filters.district) return false;
+
       if (filters.ward && d.ward && !d.ward.toLowerCase().includes(filters.ward.toLowerCase())) return false;
       if (filters.status !== 'Tất cả' && d.status !== filters.status) return false;
       return true;

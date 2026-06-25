@@ -5,7 +5,7 @@ import SearchBar from './SearchBar';
 import CustomSelect from '../UI/CustomSelect';
 import { useAuth } from '../../context/AuthContext';
 
-const districtsList = Object.keys(danangAdmin);
+
 
 const Sidebar = ({ filters, setFilters, showGeoJSON, setShowGeoJSON, dealers, onOpenAddModal, selectedLocation, onSelectLocation, onClearSelection, onEditDealer, onDeleteDealer, isSidebarOpen, setIsSidebarOpen, isAdmin, onOpenLogin }) => {
   const { logout } = useAuth();
@@ -130,30 +130,17 @@ const Sidebar = ({ filters, setFilters, showGeoJSON, setShowGeoJSON, dealers, on
           <div className="bg-white/60 backdrop-blur-xl p-5 rounded-2xl shadow-sm border border-white/60 space-y-5 hover:shadow-md transition-shadow">
             <h3 className="text-sm font-black text-gray-800 flex items-center gap-2"><span className="w-1.5 h-4 bg-blue-500 rounded-full inline-block"></span> Bộ lọc Hiển thị</h3>
             <div className="flex gap-2">
-              <div className="flex-1">
-                <label className="block text-xs md:text-sm font-bold text-gray-500 mb-1 uppercase">Quận/Huyện</label>
-                <CustomSelect
-                  value={filters.district}
-                  onChange={(e) => setFilters({ ...filters, district: e.target.value, ward: '' })}
-                  triggerClassName="px-4 py-2.5 text-sm"
-                  placeholder="Tất cả Quận/Huyện"
-                  options={[
-                    { label: 'Tất cả Quận/Huyện', value: '' },
-                    ...districtsList.map(dist => ({ label: dist, value: dist }))
-                  ]}
-                />
-              </div>
+
               <div className="flex-1">
                 <label className="block text-xs md:text-sm font-bold text-blue-900/60 mb-1.5 uppercase tracking-wide">Phường/Xã</label>
                 <CustomSelect
                   value={filters.ward}
                   onChange={(e) => setFilters({ ...filters, ward: e.target.value })}
-                  disabled={!filters.district}
                   triggerClassName="px-4 py-2.5 text-sm"
                   placeholder="Tất cả Phường/Xã"
                   options={[
                     { label: 'Tất cả Phường/Xã', value: '' },
-                    ...(filters.district && danangAdmin[filters.district] ? danangAdmin[filters.district].map(w => ({ label: w, value: w })) : [])
+                    ...danangAdmin.map(w => ({ label: w, value: w }))
                   ]}
                 />
               </div>
@@ -162,7 +149,7 @@ const Sidebar = ({ filters, setFilters, showGeoJSON, setShowGeoJSON, dealers, on
             <div className="pt-2">
               <label className="block text-xs md:text-sm font-bold text-blue-900/60 mb-2 uppercase tracking-wide">Tình trạng bán hàng</label>
               <div className="grid grid-cols-2 gap-1.5 bg-gray-200/50 p-1.5 rounded-xl shadow-inner">
-                {['Tất cả', 'Đại lý tốt', 'Đại lý chưa bán', 'Đại lý rủi ro', 'Không chào bán'].map(status => (
+                {['Tất cả', 'Đại lý tốt', 'Đại lý chưa bán', 'Đại lý rủi ro', 'Không chào bán', 'Đặc biệt'].map(status => (
                   <button
                     key={status}
                     className={`col-span-1 ${status === 'Tất cả' ? 'col-span-2' : ''} py-2 text-xs md:text-sm font-bold rounded-lg transition-all duration-300 ${filters.status === status ? 'bg-white shadow-md text-blue-600 scale-[1.02]' : 'text-gray-600 hover:bg-white/40'}`}

@@ -6,14 +6,17 @@ export const dealerSchema = z.object({
     (val) => !val || /^[0-9\s\-\+\(\)]{8,15}$/.test(val),
     "Số điện thoại không hợp lệ"
   ),
-  district: z.string().min(1, "Quận/Huyện không được để trống"),
-  ward: z.string().optional(),
+  ward: z.string().min(1, "Phường/Xã không được để trống"),
+  fundingSource: z.enum(["Nguồn riêng", "Nguồn chung"], {
+    errorMap: () => ({ message: "Nguồn vốn không hợp lệ" })
+  }).optional(),
   status: z.enum([
     "Đại lý tốt",
     "Chưa bán",
     "Tháng này chưa lấy",
     "Rủi ro",
-    "Trọng điểm"
+    "Trọng điểm",
+    "Đặc biệt"
   ], {
     errorMap: () => ({ message: "Trạng thái không hợp lệ" })
   }),
