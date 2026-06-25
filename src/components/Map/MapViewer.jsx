@@ -48,16 +48,6 @@ const MapEvents = ({ onAddDealerByClick, selectedLocation, setZoomLevel, isAdmin
     },
     zoomend() {
       setZoomLevel(map.getZoom());
-    },
-    popupclose() {
-      // Dùng setTimeout nhỏ để tránh race condition khi chuyển đổi giữa 2 marker
-      // Nếu user click sang marker khác, popup mới sẽ lập tức được thêm vào DOM
-      // Nếu thực sự tắt popup, DOM sẽ không còn .leaflet-popup
-      setTimeout(() => {
-        if (!document.querySelector('.leaflet-popup')) {
-          if (onClearSelection) onClearSelection();
-        }
-      }, 50);
     }
   });
 
@@ -111,8 +101,8 @@ const GeoJSONFocus = ({ geoData, filters }) => {
 // Caching lại các đối tượng icon đã tạo để không bắt Leaflet phải parse lại chuỗi HTML.
 const iconCache = new Map();
 
-const getDealerIcon = (status, isSelected) => {
-  const cacheKey = `${status}_${isSelected}`;
+const getDealerIcon = (status) => {
+  const cacheKey = `${status}`;
   if (iconCache.has(cacheKey)) {
     return iconCache.get(cacheKey);
   }
@@ -143,17 +133,17 @@ const getDealerIcon = (status, isSelected) => {
     borderClass = 'border-gray-900';
   }
 
-  const baseSize = isSpecial ? (isSelected ? 'w-12 h-12' : 'w-9 h-9') : (isSelected ? 'w-10 h-10' : 'w-8 h-8');
-  const borderWidth = isSelected ? 'border-[3px]' : 'border-[2.5px]';
-  const shadow = isSelected ? 'shadow-2xl scale-110' : 'shadow-lg';
+  const baseSize = isSpecial ? 'w-9 h-9' : 'w-8 h-8';
+  const borderWidth = 'border-[2.5px]';
+  const shadow = 'shadow-lg';
   const sizeClass = `${baseSize} ${borderWidth} ${shadow}`;
 
-  const pulseHtml = (isSelected || isSpecial) 
-    ? `<span class="absolute -top-1 -right-1 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full ${isSpecial ? 'bg-fuchsia-400' : 'bg-blue-400'} opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 ${isSpecial ? 'bg-fuchsia-500' : 'bg-blue-500'}"></span></span>`
+  const pulseHtml = isSpecial 
+    ? `<span class="absolute -top-1 -right-1 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-fuchsia-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-fuchsia-500"></span></span>`
     : '';
 
   const iconHtml = `
-    <div class="relative flex items-center justify-center ${sizeClass} rounded-full ${bgClass} ${borderClass} transform transition-all duration-300 hover:scale-125 z-10">
+    <div class="relative flex items-center justify-center ${sizeClass} rounded-full ${bgClass} ${borderClass} transform transition-all duration-300 hover:scale-110 z-10">
       <svg class="w-[55%] h-[55%] ${colorClass}" fill="currentColor" viewBox="0 0 24 24">
         <path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/>
       </svg>
@@ -161,13 +151,14 @@ const getDealerIcon = (status, isSelected) => {
     </div>
   `;
 
-  const iconSizePx = isSpecial ? (isSelected ? 48 : 36) : (isSelected ? 40 : 32);
+  const iconSizePx = isSpecial ? 36 : 32;
 
   const icon = L.divIcon({
     html: iconHtml,
     className: 'bg-transparent border-none',
     iconSize: [iconSizePx, iconSizePx],
-    iconAnchor: [iconSizePx / 2, iconSizePx]
+    iconAnchor: [iconSizePx / 2, iconSizePx],
+    popupAnchor: [0, -iconSizePx]
   });
 
   iconCache.set(cacheKey, icon);
@@ -367,7 +358,7 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, onEditDe
             <Marker 
               key={dealer.id || Math.random().toString()} 
               position={[dealer.lat, dealer.lng]}
-              icon={getDealerIcon(dealer.status, isSelected)}
+              icon={getDealerIcon(dealer.status)}
               ref={(r) => { if (r && dealer.id) markerRefs.current[dealer.id] = r; }}
               eventHandlers={{ 
                 click: () => onSelectLocation({ ...dealer, type: 'dealer' }) 
