@@ -8,7 +8,7 @@ import DashboardModal from './components/Modals/DashboardModal';
 import DataManagementModal from './components/Modals/DataManagementModal';
 import LoginModal from './components/Modals/LoginModal';
 import { useAuth } from './context/AuthContext';
-import { errorAlert } from './utils/alerts';
+import { errorAlert, successAlert, confirmAlert } from './utils/alerts';
 
 const App = () => {
   const { isAdmin } = useAuth();
