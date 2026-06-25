@@ -3,7 +3,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCllVgURKnSY6BU5kIOaX-m6ULISAjo1X4",
+  apiKey: "[GCP_API_KEY]",
   authDomain: "webcement-f5861.firebaseapp.com",
   projectId: "webcement-f5861"
 };

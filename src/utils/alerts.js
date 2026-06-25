@@ -3,7 +3,7 @@ import Swal from 'sweetalert2';
 // Cấu hình chung cho SweetAlert2 để phù hợp với giao diện Tailwind của dự án
 const customSwal = Swal.mixin({
   customClass: {
-    container: 'z-[9999]', // Đẩy z-index lên cao nhất để không bị đè bởi các Modal khác (như ManualAddModal đang dùng z-2000, DataManagementModal z-4000)
+    container: '!z-[99999]', // Đẩy z-index lên cao nhất để không bị đè bởi các Modal khác
     popup: 'rounded-[30px] shadow-[0_20px_50px_rgba(0,0,0,0.25)] border border-white/50 bg-white/95 backdrop-blur-xl',
     title: 'text-2xl font-black text-gray-800',
     htmlContainer: 'text-gray-600 font-medium',
