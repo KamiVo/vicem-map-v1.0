@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Tooltip, GeoJSON, LayersControl, ZoomControl, useMap, useMapEvents } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
@@ -184,6 +184,19 @@ const getLocationIcon = () => {
 const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, onEditDealer, onDeleteDealer, selectedLocation, onSelectLocation, onOpenDashboard, isAdmin }) => {
   const [geoData, setGeoData] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(12);
+  const markerRefs = useRef({});
+  
+  useEffect(() => {
+    if (selectedLocation && selectedLocation.type === 'dealer' && selectedLocation.id) {
+      const timer = setTimeout(() => {
+        const marker = markerRefs.current[selectedLocation.id];
+        if (marker) {
+          marker.openPopup();
+        }
+      }, 1500); // Đợi 1.5s để hiệu ứng flyTo hoàn tất
+      return () => clearTimeout(timer);
+    }
+  }, [selectedLocation]);
   
   // Tọa độ trung tâm mặc định Đà Nẵng
   const daNangCenter = [16.0544, 108.2022];
@@ -336,6 +349,7 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, onEditDe
               key={dealer.id || Math.random().toString()} 
               position={[dealer.lat, dealer.lng]}
               icon={getDealerIcon(dealer.status, isSelected)}
+              ref={(r) => { if (r && dealer.id) markerRefs.current[dealer.id] = r; }}
               eventHandlers={{ 
                 click: () => onSelectLocation({ ...dealer, type: 'dealer' }) 
               }}
