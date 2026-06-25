@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { FaTimes, FaSpinner, FaSave, FaTrash, FaPlus, FaChartBar, FaBoxOpen } from 'react-icons/fa';
 import { fetchSalesData, saveSalesData, fetchProducts, saveProduct, deleteProduct, fetchAllSalesYears } from '../../services/firebase';
+import { useQueryClient } from '@tanstack/react-query';
 import CustomSelect from '../UI/CustomSelect';
 import { errorAlert, successAlert, confirmAlert } from '../../utils/alerts';
 
 const MONTHS = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
 const CURRENT_YEAR = new Date().getFullYear();
 
-const emptyProduct = { name: '', stock: '', stockUnit: 'Bao', price: '', priceUnit: 'Bao' };
-
 const DataManagementModal = ({ dealer, onClose }) => {
   const [activeTab, setActiveTab] = useState('sales');
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
   const [availableYears, setAvailableYears] = useState([CURRENT_YEAR]);
   
+  const queryClient = useQueryClient();
+
   // Sales state
   const [months, setMonths] = useState(Array(12).fill(0));
   const [salesLoading, setSalesLoading] = useState(false);
@@ -74,6 +75,9 @@ const DataManagementModal = ({ dealer, onClose }) => {
     setSalesSaving(true);
     try {
       await saveSalesData(dealer.id, selectedYear, months);
+      // Invalidate queries so Dashboard picks up the new data
+      queryClient.invalidateQueries({ queryKey: ['dealer', dealer.id, 'sales'] });
+      queryClient.invalidateQueries({ queryKey: ['dealer', dealer.id, 'salesYears'] });
       successAlert("Thành công", `Đã lưu sản lượng năm ${selectedYear} thành công!`);
     } catch (e) {
       console.error(e);
@@ -86,6 +90,7 @@ const DataManagementModal = ({ dealer, onClose }) => {
   const handleSaveProduct = async (product) => {
     try {
       await saveProduct(dealer.id, product);
+      queryClient.invalidateQueries({ queryKey: ['dealer', dealer.id, 'products'] });
       const updated = await fetchProducts(dealer.id);
       setProducts(updated);
       setEditingProduct(null);
@@ -100,6 +105,7 @@ const DataManagementModal = ({ dealer, onClose }) => {
     if (!isConfirmed) return;
     try {
       await deleteProduct(dealer.id, productId);
+      queryClient.invalidateQueries({ queryKey: ['dealer', dealer.id, 'products'] });
       setProducts(prev => prev.filter(p => p.id !== productId));
     } catch (e) {
       errorAlert('Lỗi', 'Lỗi khi xóa sản phẩm.');
