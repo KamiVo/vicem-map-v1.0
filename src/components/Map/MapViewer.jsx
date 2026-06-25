@@ -106,9 +106,9 @@ const getDealerIcon = (status, isSelected) => {
   let isSpecial = false;
 
   if (status === 'Đặc biệt') {
-    colorClass = 'text-yellow-700';
-    bgClass = 'bg-gradient-to-br from-yellow-200 to-amber-300';
-    borderClass = 'border-yellow-500';
+    colorClass = 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]';
+    bgClass = 'bg-gradient-to-tr from-violet-600 via-fuchsia-500 to-rose-500 animate-[pulse_2s_ease-in-out_infinite] shadow-[0_0_15px_rgba(217,70,239,0.6)]';
+    borderClass = 'border-white/80 border-[3px]';
     isSpecial = true;
   } else if (status === 'Đại lý tốt') {
     colorClass = 'text-emerald-600';
@@ -134,7 +134,7 @@ const getDealerIcon = (status, isSelected) => {
   const sizeClass = `${baseSize} ${borderWidth} ${shadow}`;
 
   const pulseHtml = (isSelected || isSpecial) 
-    ? `<span class="absolute -top-1 -right-1 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full ${isSpecial ? 'bg-yellow-400' : 'bg-blue-400'} opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 ${isSpecial ? 'bg-yellow-500' : 'bg-blue-500'}"></span></span>`
+    ? `<span class="absolute -top-1 -right-1 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full ${isSpecial ? 'bg-fuchsia-400' : 'bg-blue-400'} opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 ${isSpecial ? 'bg-fuchsia-500' : 'bg-blue-500'}"></span></span>`
     : '';
 
   const iconHtml = `
