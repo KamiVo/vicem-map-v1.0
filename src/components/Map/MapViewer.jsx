@@ -37,7 +37,7 @@ const ResetViewControl = ({ center, zoom }) => {
 };
 
 // Map Events
-const MapEvents = ({ onAddDealerByClick, selectedLocation, setZoomLevel, isAdmin }) => {
+const MapEvents = ({ onAddDealerByClick, selectedLocation, setZoomLevel, isAdmin, onClearSelection }) => {
   const map = useMap();
   
   useMapEvents({
@@ -48,15 +48,21 @@ const MapEvents = ({ onAddDealerByClick, selectedLocation, setZoomLevel, isAdmin
     },
     zoomend() {
       setZoomLevel(map.getZoom());
+    },
+    popupclose() {
+      // Khi user đóng popup (bấm X hoặc click ra ngoài), xóa trạng thái selected
+      if (onClearSelection) onClearSelection();
     }
   });
 
   useEffect(() => {
     if (selectedLocation && selectedLocation.lat && selectedLocation.lng) {
+      // Đóng popup cũ trước khi bay đến vị trí mới
+      map.closePopup();
       // Tính toán tọa độ bù trừ để marker nằm lệch xuống dưới 1 chút (tránh banner ở trên cùng)
-      const targetZoom = 18; // Tăng zoom level lên 18 để nhìn rõ đường phố và tách biệt các marker gần nhau
+      const targetZoom = 18;
       const targetPoint = map.project([selectedLocation.lat, selectedLocation.lng], targetZoom);
-      targetPoint.y -= 150; // Trừ đi 150 pixel để dời tâm bản đồ lên trên, marker sẽ nằm xuống dưới
+      targetPoint.y -= 150;
       const targetLatLng = map.unproject(targetPoint, targetZoom);
       map.flyTo(targetLatLng, targetZoom, { animate: true, duration: 1.5 });
     }
@@ -293,6 +299,7 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, onEditDe
           selectedLocation={selectedLocation} 
           setZoomLevel={setZoomLevel}
           isAdmin={isAdmin}
+          onClearSelection={() => onSelectLocation(null)}
         />
         <GeoJSONFocus geoData={geoData} filters={filters} />
         

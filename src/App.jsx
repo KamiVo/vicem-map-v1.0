@@ -39,7 +39,7 @@ const App = () => {
 
   const handleSelectLocation = (loc) => {
     setSelectedLocation(loc);
-    setIsSidebarOpen(true); // Mở Sidebar khi click marker
+    if (loc) setIsSidebarOpen(true); // Mở Sidebar khi click marker, không mở khi clear
   };
 
   const loadData = useCallback(async () => {
