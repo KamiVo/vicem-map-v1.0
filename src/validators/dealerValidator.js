@@ -12,10 +12,9 @@ export const dealerSchema = z.object({
   }).optional(),
   status: z.enum([
     "Đại lý tốt",
-    "Chưa bán",
-    "Tháng này chưa lấy",
-    "Rủi ro",
-    "Trọng điểm",
+    "Đại lý chưa bán",
+    "Đại lý rủi ro",
+    "Không chào bán",
     "Đặc biệt"
   ], {
     errorMap: () => ({ message: "Trạng thái không hợp lệ" })

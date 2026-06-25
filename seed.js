@@ -6,7 +6,7 @@ const wards = [
   "Liên Chiểu", "Cẩm Lệ", "Hòa Xuân", "Hòa Tiến", "Hòa Vang"
 ];
 
-const statuses = ['Đại lý tốt', 'Chưa bán', 'Tháng này chưa lấy', 'Rủi ro', 'Trọng điểm', 'Không chào bán', 'Đặc biệt'];
+const statuses = ['Đại lý tốt', 'Đại lý chưa bán', 'Đại lý rủi ro', 'Không chào bán', 'Đặc biệt'];
 const fundingSources = ['Nguồn riêng', 'Nguồn chung'];
 
 function randomLat() { return 15.95 + Math.random() * 0.15; }

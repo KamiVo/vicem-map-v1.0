@@ -166,6 +166,7 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData,
                   { label: 'Đại lý chưa bán', value: 'Đại lý chưa bán' },
                   { label: 'Đại lý rủi ro', value: 'Đại lý rủi ro' },
                   { label: 'Không chào bán', value: 'Không chào bán' },
+                  { label: 'Đặc biệt', value: 'Đặc biệt' },
                 ]}
               />
             </div>
@@ -193,7 +194,7 @@ const ManualAddModal = ({ isOpen, onClose, onDataAdded, initialCoords, editData,
                 onChange={handleChange} 
                 options={[
                   { label: 'Đang thuê', value: 'Đang thuê' },
-                  { label: 'Mua trực tiếp', value: 'Mua trực tiếp' },
+                  { label: 'Sở hữu', value: 'Sở hữu' },
                 ]}
               />
             </div>

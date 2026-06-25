@@ -15,7 +15,7 @@ service cloud.firestore {
         && data.name.size() >= 3
         && data.lat is number
         && data.lng is number
-        && data.status in ['Đại lý tốt', 'Chưa bán', 'Tháng này chưa lấy', 'Rủi ro', 'Trọng điểm', 'Không chào bán', 'Đặc biệt'];
+        && data.status in ['Đại lý tốt', 'Đại lý chưa bán', 'Đại lý rủi ro', 'Không chào bán', 'Đặc biệt'];
     }
 
     // Dealers collection

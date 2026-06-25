@@ -123,9 +123,9 @@ const getDealerIcon = (status, isSelected) => {
     bgClass = 'bg-amber-100';
     borderClass = 'border-amber-500';
   } else {
-    colorClass = 'text-slate-800';
-    bgClass = 'bg-slate-200';
-    borderClass = 'border-slate-800';
+    colorClass = 'text-white';
+    bgClass = 'bg-gray-800';
+    borderClass = 'border-gray-900';
   }
 
   const baseSize = isSpecial ? (isSelected ? 'w-12 h-12' : 'w-9 h-9') : (isSelected ? 'w-10 h-10' : 'w-8 h-8');
