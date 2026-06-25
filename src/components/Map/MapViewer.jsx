@@ -63,15 +63,25 @@ const MapEvents = ({ onAddDealerByClick, selectedLocation, setZoomLevel, isAdmin
 
   useEffect(() => {
     if (selectedLocation && selectedLocation.lat && selectedLocation.lng) {
-      // Đánh dấu đang đóng popup bằng code để popupclose handler không xóa selection
+      const currentZoom = map.getZoom();
+      const currentCenter = map.getCenter();
+      const targetLatLng = L.latLng(selectedLocation.lat, selectedLocation.lng);
+      const distance = currentCenter.distanceTo(targetLatLng);
+      
+      // Nếu đã ở gần cửa hàng (<500m) và zoom đủ sâu, không cần flyTo
+      // Popup sẽ được Leaflet tự mở khi user click trực tiếp trên marker
+      if (distance < 500 && currentZoom >= 16) {
+        return;
+      }
+      
+      // Từ xa (đến từ thanh tìm kiếm): đóng popup cũ và bay đến vị trí mới
       isClosingProgrammatically.current = true;
       map.closePopup();
-      // Tính toán tọa độ bù trừ để marker nằm lệch xuống dưới 1 chút (tránh banner ở trên cùng)
       const targetZoom = 18;
       const targetPoint = map.project([selectedLocation.lat, selectedLocation.lng], targetZoom);
       targetPoint.y -= 150;
-      const targetLatLng = map.unproject(targetPoint, targetZoom);
-      map.flyTo(targetLatLng, targetZoom, { animate: true, duration: 1.5 });
+      const adjustedLatLng = map.unproject(targetPoint, targetZoom);
+      map.flyTo(adjustedLatLng, targetZoom, { animate: true, duration: 1.5 });
     }
   }, [selectedLocation, map]);
 
@@ -203,7 +213,8 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, onEditDe
     if (selectedLocation && selectedLocation.type === 'dealer' && selectedLocation.id) {
       const timer = setTimeout(() => {
         const marker = markerRefs.current[selectedLocation.id];
-        if (marker) {
+        // Chỉ mở popup nếu chưa mở (tránh mở lại popup đã được Leaflet mở sẵn)
+        if (marker && !marker.isPopupOpen()) {
           marker.openPopup();
         }
       }, 1500); // Đợi 1.5s để hiệu ứng flyTo hoàn tất
