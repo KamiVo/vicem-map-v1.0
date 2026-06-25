@@ -39,7 +39,6 @@ const ResetViewControl = ({ center, zoom }) => {
 // Map Events
 const MapEvents = ({ onAddDealerByClick, selectedLocation, setZoomLevel, isAdmin, onClearSelection }) => {
   const map = useMap();
-  const isClosingProgrammatically = useRef(false);
   
   useMapEvents({
     contextmenu(e) {
@@ -51,35 +50,23 @@ const MapEvents = ({ onAddDealerByClick, selectedLocation, setZoomLevel, isAdmin
       setZoomLevel(map.getZoom());
     },
     popupclose() {
-      // Chỉ xóa selection khi USER đóng popup (bấm X hoặc click ra ngoài)
-      // Bỏ qua khi đóng bằng code (map.closePopup()) để tránh race condition
-      if (isClosingProgrammatically.current) {
-        isClosingProgrammatically.current = false;
-        return;
-      }
-      if (onClearSelection) onClearSelection();
+      // Dùng setTimeout nhỏ để tránh race condition khi chuyển đổi giữa 2 marker
+      // Nếu user click sang marker khác, popup mới sẽ lập tức được thêm vào DOM
+      // Nếu thực sự tắt popup, DOM sẽ không còn .leaflet-popup
+      setTimeout(() => {
+        if (!document.querySelector('.leaflet-popup')) {
+          if (onClearSelection) onClearSelection();
+        }
+      }, 50);
     }
   });
 
   useEffect(() => {
     if (selectedLocation && selectedLocation.lat && selectedLocation.lng) {
-      const currentZoom = map.getZoom();
-      const currentCenter = map.getCenter();
-      const targetLatLng = L.latLng(selectedLocation.lat, selectedLocation.lng);
-      const distance = currentCenter.distanceTo(targetLatLng);
-      
-      // Nếu đã ở gần cửa hàng (<500m) và zoom đủ sâu, không cần flyTo
-      // Popup sẽ được Leaflet tự mở khi user click trực tiếp trên marker
-      if (distance < 500 && currentZoom >= 16) {
-        return;
-      }
-      
-      // Từ xa (đến từ thanh tìm kiếm): đóng popup cũ và bay đến vị trí mới
-      isClosingProgrammatically.current = true;
-      map.closePopup();
+      // LUÔN LUÔN flyTo để focus vào marker (kể cả khi ở gần) như user yêu cầu
       const targetZoom = 18;
       const targetPoint = map.project([selectedLocation.lat, selectedLocation.lng], targetZoom);
-      targetPoint.y -= 150;
+      targetPoint.y -= 150; // Bù trừ UI
       const adjustedLatLng = map.unproject(targetPoint, targetZoom);
       map.flyTo(adjustedLatLng, targetZoom, { animate: true, duration: 1.5 });
     }
@@ -211,13 +198,19 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, onEditDe
   
   useEffect(() => {
     if (selectedLocation && selectedLocation.type === 'dealer' && selectedLocation.id) {
-      const timer = setTimeout(() => {
+      const tryOpenPopup = () => {
         const marker = markerRefs.current[selectedLocation.id];
-        // Chỉ mở popup nếu chưa mở (tránh mở lại popup đã được Leaflet mở sẵn)
+        // Chỉ mở popup nếu chưa mở (tránh gọi lại nhiều lần gây giật lag)
         if (marker && !marker.isPopupOpen()) {
           marker.openPopup();
         }
-      }, 1500); // Đợi 1.5s để hiệu ứng flyTo hoàn tất
+      };
+
+      // Thử mở ngay lập tức (nếu marker đã có sẵn trên DOM)
+      tryOpenPopup();
+      
+      // Đặt thêm timer chờ flyTo hoàn tất phòng trường hợp marker đang bị Gom cụm (Cluster) chưa render
+      const timer = setTimeout(tryOpenPopup, 1500); 
       return () => clearTimeout(timer);
     }
   }, [selectedLocation]);
@@ -385,7 +378,7 @@ const MapViewer = ({ dealers, showGeoJSON, filters, onAddDealerByClick, onEditDe
                   {dealer.name}
                 </Tooltip>
               )}
-              <Popup offset={[0, -20]} className="custom-popup" autoPanPaddingTopLeft={[0, 120]}>
+              <Popup autoPan={false} offset={[0, -20]} className="custom-popup">
                 <div className="p-2 min-w-[260px]">
                   <h3 className="font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-cyan-500 text-sm mb-3 leading-tight drop-shadow-sm">{dealer.status === 'Đặc biệt' && '⭐ '}{dealer.name}</h3>
                   <div className="text-xs md:text-sm text-gray-600 mb-4 space-y-2 font-medium">
