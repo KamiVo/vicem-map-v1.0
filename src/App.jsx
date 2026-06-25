@@ -90,11 +90,14 @@ const App = () => {
         await deleteDealerFromDB(id, currentUser);
         loadData();
         successAlert("Đã xóa!", "Đại lý đã được xóa thành công.");
+        return true;
       } catch (error) {
         console.error("Lỗi xóa đại lý:", error);
         errorAlert("Lỗi Xóa", "Có lỗi xảy ra khi xóa đại lý.");
+        return false;
       }
     }
+    return false;
   }, [loadData]);
 
   return (
@@ -173,10 +176,12 @@ const App = () => {
         }}
         initialCoords={modalCoords}
         editData={modalEditData}
-        onDeleteDealer={(id) => {
-          handleDeleteDealer(id);
-          setIsModalOpen(false);
-          setSelectedLocation(null);
+        onDeleteDealer={async (id) => {
+          const success = await handleDeleteDealer(id);
+          if (success) {
+            setIsModalOpen(false);
+            setSelectedLocation(null);
+          }
         }}
       />
       
