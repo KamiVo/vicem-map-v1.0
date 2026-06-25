@@ -119,3 +119,19 @@ path.leaflet-interactive {
 .swal2-container {
   z-index: 99999 !important;
 }
+
+/* Animation dành riêng cho Đại lý Đặc biệt */
+@keyframes neonPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(217, 70, 239, 0.4), 0 0 20px rgba(217, 70, 239, 0.2);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(217, 70, 239, 0.8), 0 0 30px rgba(236, 72, 153, 0.6);
+  }
+}
+
+.animate-neon-pulse {
+  animation: neonPulse 2s ease-in-out infinite;
+}

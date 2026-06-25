@@ -107,7 +107,7 @@ const getDealerIcon = (status, isSelected) => {
 
   if (status === 'Đặc biệt') {
     colorClass = 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]';
-    bgClass = 'bg-gradient-to-tr from-violet-600 via-fuchsia-500 to-rose-500 animate-[pulse_2s_ease-in-out_infinite] shadow-[0_0_15px_rgba(217,70,239,0.6)]';
+    bgClass = 'bg-gradient-to-tr from-violet-600 via-fuchsia-500 to-rose-500 animate-neon-pulse';
     borderClass = 'border-white/80 border-[3px]';
     isSpecial = true;
   } else if (status === 'Đại lý tốt') {
