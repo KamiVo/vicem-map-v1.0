@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Tooltip, GeoJSON, LayersControl
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import danangAdmin from '../../assets/danang_admin.json';
+
 
 const { BaseLayer } = LayersControl;
 
