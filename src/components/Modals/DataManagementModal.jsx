@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaTimes, FaSpinner, FaSave, FaTrash, FaPlus, FaChartBar, FaBoxOpen } from 'react-icons/fa';
-import { fetchSalesData, saveSalesData, fetchProducts, saveProduct, deleteProduct, fetchAllSalesYears } from '../../services/firebase';
+import { fetchSalesData, saveSalesData, fetchProducts, saveProduct, deleteProduct, fetchAllSalesYears, fetchProductSuggestions } from '../../services/firebase';
 import { useQueryClient } from '@tanstack/react-query';
 import CustomSelect from '../UI/CustomSelect';
 import { errorAlert, successAlert, confirmAlert } from '../../utils/alerts';
@@ -328,7 +328,8 @@ const ProductForm = ({ product, onSave, onCancel }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="sm:col-span-2">
           <label className="text-[11px] font-black text-blue-900/60 uppercase tracking-wide block mb-1.5">Tên hàng hóa *</label>
-          <input required name="name" value={form.name} onChange={handleChange} placeholder="VD: Xi măng PCB40" className="w-full bg-white/50 border border-gray-200/80 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-800 outline-none focus:ring-2 focus:ring-blue-500/50 shadow-inner transition-all" />
+          <input required name="name" value={form.name} onChange={handleChange} list="product-suggestions" placeholder="VD: Xi măng PCB40" className="w-full bg-white/50 border border-gray-200/80 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-800 outline-none focus:ring-2 focus:ring-blue-500/50 shadow-inner transition-all" />
+          <ProductSuggestionsList />
         </div>
         <div>
           <label className="text-[11px] font-black text-blue-900/60 uppercase tracking-wide block mb-1.5">Tồn kho</label>
@@ -350,6 +351,21 @@ const ProductForm = ({ product, onSave, onCancel }) => {
         <button type="submit" className="px-6 py-2.5 text-white font-black uppercase tracking-wider bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 rounded-xl transition-all shadow-[0_4px_15px_rgba(59,130,246,0.3)] hover:shadow-[0_4px_20px_rgba(34,211,238,0.4)] hover:-translate-y-0.5 text-sm flex items-center gap-2"><FaSave size={14} /> Lưu Lại</button>
       </div>
     </form>
+  );
+};
+
+// Sub-component để quản lý danh sách gợi ý độc lập (không re-render toàn bộ form)
+const ProductSuggestionsList = () => {
+  const [suggestions, setSuggestions] = useState([]);
+  useEffect(() => {
+    fetchProductSuggestions().then(setSuggestions).catch(console.error);
+  }, []);
+  
+  if (suggestions.length === 0) return null;
+  return (
+    <datalist id="product-suggestions">
+      {suggestions.map((name, i) => <option key={i} value={name} />)}
+    </datalist>
   );
 };
 

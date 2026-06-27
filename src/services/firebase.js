@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, enableIndexedDbPersistence, collection, getDocs, writeBatch, doc, getDoc, setDoc, updateDoc, deleteField, deleteDoc, addDoc } from "firebase/firestore";
+import { getFirestore, enableIndexedDbPersistence, collection, getDocs, writeBatch, doc, getDoc, setDoc, updateDoc, deleteField, deleteDoc, addDoc, arrayUnion } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
 
@@ -234,10 +234,33 @@ export const fetchAllSalesYears = async (dealerId) => {
 };
 
 // ============================================================
-// SUB-COLLECTION: PRODUCTS (Hàng hóa)
+// SUB-COLLECTION: PRODUCTS (Hàng hóa) & SUGGESTIONS
 // Cấu trúc: dealers/{dealerId}/products/{productId}
-// Document: { name, stock, stockUnit, price, priceUnit }
+// Suggestions: settings/product_names
 // ============================================================
+
+export const fetchProductSuggestions = async () => {
+  if (!db) return [];
+  try {
+    const ref = doc(db, 'settings', 'product_names');
+    const snap = await getDoc(ref);
+    return snap.exists() ? (snap.data().names || []) : [];
+  } catch (e) {
+    console.error("Lỗi khi tải danh sách gợi ý hàng hóa", e);
+    return [];
+  }
+};
+
+export const addProductSuggestion = async (name) => {
+  if (!db || !name) return;
+  try {
+    const ref = doc(db, 'settings', 'product_names');
+    // arrayUnion tự động bỏ qua nếu đã tồn tại, merge: true tự tạo doc nếu chưa có
+    await setDoc(ref, { names: arrayUnion(name.trim()) }, { merge: true });
+  } catch (e) {
+    console.error("Lỗi khi lưu gợi ý hàng hóa", e);
+  }
+};
 
 export const fetchProducts = async (dealerId) => {
   if (!db) throw new Error("Firebase chưa được cấu hình.");
@@ -249,6 +272,12 @@ export const fetchProducts = async (dealerId) => {
 export const saveProduct = async (dealerId, product) => {
   if (!db) throw new Error("Firebase chưa được cấu hình.");
   const { id, ...data } = product;
+
+  // Cập nhật danh sách gợi ý ngầm
+  if (data.name) {
+    addProductSuggestion(data.name);
+  }
+
   if (id) {
     // Cập nhật sản phẩm đã có
     await setDoc(doc(db, "dealers", dealerId, "products", id), data);
