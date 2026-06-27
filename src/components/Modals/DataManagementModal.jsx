@@ -227,7 +227,7 @@ const DataManagementModal = ({ dealer, onClose }) => {
                 <h3 className="font-black text-gray-800 uppercase tracking-wide text-sm">Danh mục hàng hóa ({products.length}/10)</h3>
                 {products.length < 10 && !editingProduct && (
                   <button
-                    onClick={() => setEditingProduct({ ...emptyProduct })}
+                    onClick={() => setEditingProduct({ name: '', stock: '', stockUnit: 'Bao', price: '', priceUnit: 'Bao' })}
                     className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white text-xs font-black uppercase tracking-wider px-5 py-2.5 rounded-xl transition-all shadow-[0_4px_15px_rgba(59,130,246,0.3)] hover:-translate-y-0.5"
                   >
                     <FaPlus /> Thêm hàng hóa

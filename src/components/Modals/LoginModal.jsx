@@ -54,7 +54,7 @@ const LoginModal = ({ isOpen, onClose }) => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-11 pr-4 py-3 bg-white/50 border border-gray-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-inner transition-all font-semibold text-gray-800" 
-                placeholder="admin@vicem.com.vn" 
+                placeholder="[EMAIL_ADDRESS]"
               />
             </div>
           </div>
