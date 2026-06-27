@@ -56,7 +56,10 @@ const DataManagementModal = ({ dealer, onClose }) => {
   // Load products
   useEffect(() => {
     if (!dealer?.id) return;
-    setProductsLoading(true);
+    // Tối ưu: Nếu đã có data thì không hiện Loading spinner nữa để tránh giật hình
+    if (products.length === 0) {
+      setProductsLoading(true);
+    }
     fetchProducts(dealer.id)
       .then(setProducts)
       .catch(console.error)
@@ -88,27 +91,47 @@ const DataManagementModal = ({ dealer, onClose }) => {
   };
 
   const handleSaveProduct = async (product) => {
+    // 1. Cập nhật giao diện ngay lập tức (Optimistic UI) để loại bỏ độ trễ (lag)
+    const isNew = !product.id;
+    const tempId = product.id || `temp_${Date.now()}`;
+    const optimisticProduct = { ...product, id: tempId };
+    
+    setProducts(prev => {
+      if (isNew) return [...prev, optimisticProduct];
+      return prev.map(p => p.id === product.id ? optimisticProduct : p);
+    });
+    setEditingProduct(null); // Đóng form ngay lập tức cho mượt
+
+    // 2. Chạy ngầm server
     try {
       await saveProduct(dealer.id, product);
       queryClient.invalidateQueries({ queryKey: ['dealer', dealer.id, 'products'] });
+      // Lấy lại danh sách chuẩn từ server có ID thật
       const updated = await fetchProducts(dealer.id);
       setProducts(updated);
-      setEditingProduct(null);
     } catch (e) {
       console.error(e);
       errorAlert('Lỗi', 'Lỗi khi lưu sản phẩm.');
+      // Nếu lỗi thì hoàn tác lại giao diện (Rollback)
+      fetchProducts(dealer.id).then(setProducts);
     }
   };
 
   const handleDeleteProduct = async (productId) => {
     const isConfirmed = await confirmAlert("Xác nhận xóa", "Xóa sản phẩm này?");
     if (!isConfirmed) return;
+    
+    // Xóa ngay trên giao diện
+    setProducts(prev => prev.filter(p => p.id !== productId));
+    
+    // Chạy ngầm server
     try {
       await deleteProduct(dealer.id, productId);
       queryClient.invalidateQueries({ queryKey: ['dealer', dealer.id, 'products'] });
-      setProducts(prev => prev.filter(p => p.id !== productId));
     } catch (e) {
       errorAlert('Lỗi', 'Lỗi khi xóa sản phẩm.');
+      // Rollback
+      fetchProducts(dealer.id).then(setProducts);
     }
   };
 
